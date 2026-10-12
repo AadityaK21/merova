@@ -7,7 +7,7 @@
    The key is meant to be public, so it's safe here. Until it's set, the
    forms ask people to email hello@merova.app instead.
    ------------------------------------------------------------------------ */
-var WEB3FORMS_KEY = "YOUR_WEB3FORMS_ACCESS_KEY";
+var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
 
 (function () {
   "use strict";

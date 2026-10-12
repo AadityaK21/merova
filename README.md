@@ -48,7 +48,7 @@ Every blank on the site looks like `[THIS]` with a dashed box around it. Search 
 | `[24 hours]`, `[7]`, returns rule | refund | Call cancellation window and shop return rules |
 | Shipping table, `[CALL METHOD ...]` | shipping | If you only sell digital things, delete section 03 (there's a note in the file) |
 | `[90]`, `[30]` | privacy, delete-account | How long logs and backups are kept |
-| `YOUR_WEB3FORMS_ACCESS_KEY` | assets/js/main.js | See next section. One key powers both the contact form and the waitlist |
+| Web3Forms key | assets/js/main.js | Done. One key powers both the contact form and the waitlist |
 
 Also confirm `hello@`, `support@` (and `billing@` if you want it) are added as aliases in admin.google.com before going live.
 

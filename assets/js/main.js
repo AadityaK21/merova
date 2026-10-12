@@ -1,8 +1,8 @@
-/* Merova — small progressive enhancements. Every page works without this file;
+/* Merova: small progressive enhancements. Every page works without this file;
    it adds the mobile menu, form sending, copy buttons and a little motion. */
 
 /* ------------------------------------------------------------------------
-   SETTINGS — the only line you need to edit.
+   SETTINGS: the only line you need to edit.
    Free key from https://web3forms.com (sign up with hello@merova.app).
    The key is meant to be public, so it's safe here. Until it's set, the
    forms ask people to email hello@merova.app instead.

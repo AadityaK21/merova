@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Merova — merova.app
+   Merova: merova.app
    One stylesheet for every page. No build step.
    Sections switch between dark (.s-dark) and light (.s-light); each sets
    its own colour variables, so components just use var(--fg), var(--line)...
@@ -309,7 +309,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 
 /* ==========================================================================
-   Home — hero
+   Home: hero
    ========================================================================== */
 .hero .frame { min-height: calc(100svh - var(--header-h)); display: flex; }
 .hero__grid {
@@ -372,7 +372,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ==========================================================================
-   Home — intro cells
+   Home: intro cells
    ========================================================================== */
 .intro__head {
   display: grid;
@@ -407,7 +407,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 
 /* ==========================================================================
-   Home — apps
+   Home: apps
    ========================================================================== */
 .apps__head {
   display: flex;

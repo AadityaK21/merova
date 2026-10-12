@@ -6,6 +6,8 @@
 <title>Contact — Merova</title>
 <meta name="description" content="Email hello@merova.app for general questions or support@merova.app for help with Merova apps, or send a message using the form.">
 <link rel="canonical" href="https://merova.app/contact">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.web3forms.com; form-action 'self' https://api.web3forms.com; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#0C0C0D">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -62,12 +64,12 @@
           <div class="mailboxes">
             <div class="mailbox">
               <p class="label">general</p>
-              <a class="addr" href="mailto:hello@merova.app">hello@merova.app</a>
+              <div class="addr-row"><a class="addr" href="mailto:hello@merova.app">hello@merova.app</a><button class="copy" type="button" data-copy="hello@merova.app">Copy</button></div>
               <p>Questions about Merova, ideas, partnerships and press.</p>
             </div>
             <div class="mailbox">
               <p class="label">app help</p>
-              <a class="addr" href="mailto:support@merova.app">support@merova.app</a>
+              <div class="addr-row"><a class="addr" href="mailto:support@merova.app">support@merova.app</a><button class="copy" type="button" data-copy="support@merova.app">Copy</button></div>
               <p>Your account, payments, refunds, bugs, or deleting your data in Merova Fit.</p>
             </div>
           </div>
@@ -82,11 +84,9 @@
           </div>
         </div>
 
-        <form class="form" id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+        <form class="form" id="contact-form" data-form="contact" action="https://api.web3forms.com/submit" method="POST">
           <h2 class="h3">Send a message</h2>
-          <!-- Web3Forms access key: get it free at web3forms.com using hello@merova.app.
-               This key is meant to be public, so it's safe in the HTML. -->
-          <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY">
+          <!-- The Web3Forms key is set once, at the top of assets/js/main.js -->
           <input type="hidden" name="subject" value="New message from merova.app">
           <input type="hidden" name="from_name" value="merova.app contact form">
           <div class="hp" aria-hidden="true"><label>Leave this empty <input type="checkbox" name="botcheck" tabindex="-1"></label></div>

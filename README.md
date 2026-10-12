@@ -6,7 +6,7 @@ The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, 
 
 | File | What it is |
 | --- | --- |
-| `index.html` | Home: hero, what Merova is, the apps (Merova Fit + next app), call to action |
+| `index.html` | Home: hero, what Merova is, the apps (Merova Fit + next app), launch waitlist, FAQ |
 | `about.html` | The solo-founder story |
 | `contact.html` | Emails, business details and the contact form |
 | `privacy.html` | Privacy policy (Razorpay + Play Store) |
@@ -16,7 +16,7 @@ The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, 
 | `delete-account.html` | Account deletion page (Play Store asks for this URL) |
 | `404.html` | "Page not found" page (GitHub Pages uses it automatically) |
 | `assets/css/style.css` | All styles. Colours and fonts are at the top |
-| `assets/js/main.js` | Mobile menu + contact form sending |
+| `assets/js/main.js` | Mobile menu, form sending (contact + waitlist), copy buttons, motion. **The Web3Forms key goes at the top of this file** |
 | `assets/fonts/` | Sora and IBM Plex Mono, self-hosted (no Google Fonts requests) |
 | `assets/brand/` | Logos, icons and the link-preview image from the logo kit |
 | `CNAME` | Tells GitHub Pages the site lives at merova.app |
@@ -31,7 +31,7 @@ Open the folder in a terminal and run:
 python -m http.server 8000
 ```
 
-Then open http://localhost:8000 in your browser. (Double-clicking `index.html` also works, except the 404 page.)
+Then open http://localhost:8000 in your browser. Use this rather than double-clicking the files: the pages carry a strict security policy that blocks styles and scripts when opened straight from disk.
 
 ## Fill these in before launch
 
@@ -44,23 +44,36 @@ Every blank on the site looks like `[THIS]` with a dashed box around it. Search 
 | `[CITY]` | terms | City whose courts handle disputes (e.g. New Delhi) |
 | `[PRICING TBD]` | index, terms | Razorpay wants prices visible somewhere (the app is fine too) |
 | `[IN-APP PATH ...]` | refund, delete-account | Where Cancel plan / Delete account sits in the app |
-| `[BACKEND HOST]` | privacy | Where the FastAPI server runs (Render, Railway, a VPS...) |
 | `[CHECK THIS LIST MATCHES THE QUIZ]` | privacy | Make the list match the real onboarding questions |
 | `[24 hours]`, `[7]`, returns rule | refund | Call cancellation window and shop return rules |
 | Shipping table, `[CALL METHOD ...]` | shipping | If you only sell digital things, delete section 03 (there's a note in the file) |
 | `[90]`, `[30]` | privacy, delete-account | How long logs and backups are kept |
-| `YOUR_WEB3FORMS_ACCESS_KEY` | contact | See next section |
+| `YOUR_WEB3FORMS_ACCESS_KEY` | assets/js/main.js | See next section. One key powers both the contact form and the waitlist |
 
 Also confirm `hello@`, `support@` (and `billing@` if you want it) are added as aliases in admin.google.com before going live.
 
-## Turn on the contact form (Web3Forms, free)
+## Turn on the contact form and waitlist (Web3Forms, free)
 
 1. Go to https://web3forms.com and enter `hello@merova.app`.
 2. They email you an access key.
-3. In `contact.html`, replace `YOUR_WEB3FORMS_ACCESS_KEY` with that key.
-4. Send yourself a test message from the live site.
+3. At the top of `assets/js/main.js`, replace `YOUR_WEB3FORMS_ACCESS_KEY` with that key.
+4. Send yourself a test message and a test waitlist sign-up from the live site. Waitlist sign-ups arrive as emails titled "Waitlist sign-up from merova.app".
 
-The Web3Forms key is meant to be public, so it's fine in the HTML. Until the key is in, the form tells visitors to email hello@merova.app instead.
+The Web3Forms key is meant to be public, so it's fine in the code. Until the key is in, both forms tell visitors to email hello@merova.app instead.
+
+## What moves on the site
+
+- The Fold mark in the hero draws itself on load, leans toward the pointer and opens up as you scroll.
+- The Merova Fit phone drawing plays once (day score fills, workouts tick, water fills) when it scrolls into view.
+- Pages crossfade when you click between them (Chrome, Edge and Safari; other browsers just load normally).
+- FAQ answers slide open.
+- Everything is switched off for visitors who ask their device for reduced motion.
+
+## Security on the site
+
+- Every page has a Content Security Policy: only files from merova.app run, and forms can only send to Web3Forms.
+- No trackers, no third-party scripts or fonts, nothing loaded from other sites.
+- No secrets anywhere in the code. The only key (Web3Forms) is public by design.
 
 ## Editing the header or footer
 

@@ -6,6 +6,8 @@
 <title>Privacy policy — Merova</title>
 <meta name="description" content="How Merova and Merova Fit collect, use, share and protect your personal data, and how to use your rights.">
 <link rel="canonical" href="https://merova.app/privacy">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.web3forms.com; form-action 'self' https://api.web3forms.com; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#0C0C0D">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -58,16 +60,35 @@
   <section class="s-light">
     <div class="frame frame--marks">
       <div class="legal pad">
-        <nav class="legal-nav" aria-label="Legal pages">
-          <p class="label">policies</p>
-          <ul>
+        <aside class="legal-nav">
+          <nav aria-label="Legal pages">
+            <p class="label">policies</p>
+            <ul>
             <li><a href="privacy.html" aria-current="page">Privacy policy</a></li>
             <li><a href="terms.html">Terms of service</a></li>
             <li><a href="refund.html">Refunds and cancellations</a></li>
             <li><a href="shipping.html">Shipping and delivery</a></li>
             <li><a href="delete-account.html">Delete your account</a></li>
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+          <nav class="toc" aria-label="On this page">
+            <p class="label">on this page</p>
+            <ol>
+              <li><a href="#who-we-are">Who we are</a></li>
+              <li><a href="#what-we-collect">What we collect</a></li>
+              <li><a href="#how-we-use">How we use your data</a></li>
+              <li><a href="#consent">Consent and legal basis</a></li>
+              <li><a href="#sharing">Who we share it with</a></li>
+              <li><a href="#cookies">Cookies and local storage</a></li>
+              <li><a href="#retention">How long we keep data</a></li>
+              <li><a href="#your-rights">Your rights</a></li>
+              <li><a href="#security">Security</a></li>
+              <li><a href="#children">Age limit</a></li>
+              <li><a href="#changes">Changes to this policy</a></li>
+              <li><a href="#contact">Grievance officer and contact</a></li>
+            </ol>
+          </nav>
+        </aside>
         <article class="doc">
           <div class="summary">
             <p><strong>The short version</strong></p>
@@ -100,6 +121,7 @@
                 <tr><td>Messages and bookings</td><td>Chats with your coach, call bookings and times</td><td>To provide coaching</td></tr>
                 <tr><td>Orders and payments</td><td>Items bought, amounts, order and payment IDs, payment status, and a delivery address if you order something physical</td><td>To process orders, send receipts, handle refunds and keep tax records</td></tr>
                 <tr><td>Messages to us</td><td>What you send through the contact form or by email</td><td>To reply to you</td></tr>
+                <tr><td>Waitlist</td><td>Your email and which launches you asked to hear about</td><td>To tell you when they launch, and nothing else</td></tr>
                 <tr><td>Technical data</td><td>Device and browser type, IP address, app version, error logs</td><td>To keep the services secure and fix problems</td></tr>
               </tbody>
             </table>
@@ -131,11 +153,11 @@
               <tbody>
                 <tr><td>Razorpay</td><td>Payments and refunds</td><td>Order and payment details</td></tr>
                 <tr><td>MongoDB Atlas</td><td>Database hosting</td><td>Account and app data</td></tr>
-                <tr><td><span class="ph">[BACKEND HOST]</span></td><td>Runs the Merova Fit server</td><td>Account and app data</td></tr>
+                <tr><td>Render</td><td>Runs the Merova Fit server</td><td>Account and app data</td></tr>
                 <tr><td>Twilio</td><td>WhatsApp messages</td><td>Phone number, booking details</td></tr>
                 <tr><td>Resend</td><td>Sign-in codes and receipts by email</td><td>Email address, message content</td></tr>
                 <tr><td>Google Workspace</td><td>Our email inbox</td><td>Emails you send us</td></tr>
-                <tr><td>Web3Forms</td><td>Delivers contact form messages</td><td>What you type into the form</td></tr>
+                <tr><td>Web3Forms</td><td>Delivers contact form messages and waitlist sign-ups</td><td>What you type into the form</td></tr>
                 <tr><td>GitHub Pages</td><td>Hosts this website</td><td>IP address in server logs</td></tr>
                 <tr><td>Google Play</td><td>Distributes the Android app</td><td>Handled under Google's own policy</td></tr>
               </tbody>

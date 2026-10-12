@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — Merova</title>
+<meta name="description" content="Email hello@merova.app for general questions or support@merova.app for help with Merova apps, or send a message using the form.">
+<link rel="canonical" href="https://merova.app/contact">
+<meta name="theme-color" content="#0C0C0D">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Merova">
+<meta property="og:title" content="Contact — Merova">
+<meta property="og:description" content="Email hello@merova.app for general questions or support@merova.app for help with Merova apps, or send a message using the form.">
+<meta property="og:url" content="https://merova.app/contact">
+<meta property="og:image" content="https://merova.app/assets/brand/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Merova logo">
+<meta property="og:locale" content="en_IN">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="assets/fonts/sora-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/main.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header s-dark">
+  <div class="frame">
+    <div class="bar pad">
+      <a class="brand" href="index.html" aria-label="Merova home"><img src="assets/brand/merova-lockup-horizontal-bone.svg" alt="Merova" width="108" height="22"></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu"><span></span><span></span></button>
+      <nav class="nav" id="site-nav" aria-label="Main">
+        <ul class="nav__links">
+          <li><a href="index.html#apps">Apps</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html" aria-current="page">Contact</a></li>
+        </ul>
+        <a class="btn btn--ghost btn--sm" href="https://fit.merova.app"><span class="dot" aria-hidden="true"></span>Open Merova Fit</a>
+      </nav>
+    </div>
+  </div>
+</header>
+<main id="main">
+  <section class="page-hero s-dark">
+    <div class="frame">
+      <div class="page-hero__inner pad">
+        <h1 class="display">Get in touch.</h1>
+        <p class="lede">Questions, ideas or a problem with an app. Email is the fastest way to reach me.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-light">
+    <div class="frame frame--marks">
+      <div class="contact pad">
+        <div>
+          <div class="mailboxes">
+            <div class="mailbox">
+              <p class="label">general</p>
+              <a class="addr" href="mailto:hello@merova.app">hello@merova.app</a>
+              <p>Questions about Merova, ideas, partnerships and press.</p>
+            </div>
+            <div class="mailbox">
+              <p class="label">app help</p>
+              <a class="addr" href="mailto:support@merova.app">support@merova.app</a>
+              <p>Your account, payments, refunds, bugs, or deleting your data in Merova Fit.</p>
+            </div>
+          </div>
+          <div class="business">
+            <p class="label">business details</p>
+            <dl>
+              <div><dt>name</dt><dd>Merova, run by Aaditya Kumawat (sole proprietor)</dd></div>
+              <div><dt>address</dt><dd><span class="ph">[BUSINESS ADDRESS]</span></dd></div>
+              <div><dt>phone</dt><dd><span class="ph">[PHONE, optional]</span></dd></div>
+              <div><dt>grievances</dt><dd>Aaditya Kumawat, <a class="link" href="mailto:support@merova.app">support@merova.app</a></dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <form class="form" id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+          <h2 class="h3">Send a message</h2>
+          <!-- Web3Forms access key: get it free at web3forms.com using hello@merova.app.
+               This key is meant to be public, so it's safe in the HTML. -->
+          <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY">
+          <input type="hidden" name="subject" value="New message from merova.app">
+          <input type="hidden" name="from_name" value="merova.app contact form">
+          <div class="hp" aria-hidden="true"><label>Leave this empty <input type="checkbox" name="botcheck" tabindex="-1"></label></div>
+          <div class="field-row">
+            <div class="field">
+              <label for="f-name">your name</label>
+              <input id="f-name" name="name" type="text" autocomplete="name" required maxlength="100">
+            </div>
+            <div class="field">
+              <label for="f-email">your email</label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required maxlength="200">
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-topic">what it's about</label>
+            <select id="f-topic" name="topic">
+              <option>General question</option>
+              <option>Help with Merova Fit</option>
+              <option>Payments or refunds</option>
+              <option>Partnership or press</option>
+              <option>Something else</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-msg">message</label>
+            <textarea id="f-msg" name="message" required maxlength="5000"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn--primary" type="submit">Send message</button>
+          </div>
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          <p class="note">Your message goes to hello@merova.app through Web3Forms. Read the <a class="link" href="privacy.html">privacy policy</a> to see how messages are handled.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site-footer s-dark">
+  <div class="frame frame--marks">
+    <div class="footer__grid pad">
+      <div class="footer__brand">
+        <a href="index.html" aria-label="Merova home"><img src="assets/brand/merova-lockup-horizontal-bone.svg" alt="Merova" width="118" height="24"></a>
+        <p>Simple apps for everyday life.</p>
+      </div>
+      <nav class="footer__col" aria-label="Merova">
+        <h2>merova</h2>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="index.html#apps">Apps</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="https://fit.merova.app">Merova Fit</a></li>
+        </ul>
+      </nav>
+      <nav class="footer__col" aria-label="Legal">
+        <h2>legal</h2>
+        <ul>
+          <li><a href="privacy.html">Privacy policy</a></li>
+          <li><a href="terms.html">Terms of service</a></li>
+          <li><a href="refund.html">Refunds and cancellations</a></li>
+          <li><a href="shipping.html">Shipping and delivery</a></li>
+          <li><a href="delete-account.html">Delete your account</a></li>
+        </ul>
+      </nav>
+      <div class="footer__col">
+        <h2>email</h2>
+        <ul>
+          <li><a href="mailto:hello@merova.app">hello@merova.app</a><small>general</small></li>
+          <li><a href="mailto:support@merova.app">support@merova.app</a><small>app help</small></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__base pad">
+      <p class="label">&copy; 2026 Merova</p>
+      <p class="label">Merova is run by Aaditya Kumawat, sole proprietor, India.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

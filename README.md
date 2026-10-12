@@ -25,13 +25,13 @@ The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, 
 
 ## Preview on your computer
 
-Open the folder in a terminal and run:
+Links use clean addresses (merova.app/about, not about.html), so preview with a server that understands them. Open the folder in a terminal and run:
 
 ```
-python -m http.server 8000
+npx serve .
 ```
 
-Then open http://localhost:8000 in your browser. Use this rather than double-clicking the files: the pages carry a strict security policy that blocks styles and scripts when opened straight from disk.
+Then open the address it prints (usually http://localhost:3000). Don't double-click the files: links like /about only work through a server, just like on the live site.
 
 ## Fill these in before launch
 

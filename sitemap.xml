@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://merova.app/</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/work</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/work/company-hub</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/work/merova-site</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/work/the-fold</loc><lastmod>2026-10-13</lastmod></url>
   <url><loc>https://merova.app/fit</loc><lastmod>2026-10-13</lastmod></url>
   <url><loc>https://merova.app/about</loc><lastmod>2026-10-13</lastmod></url>
   <url><loc>https://merova.app/contact</loc><lastmod>2026-10-13</lastmod></url>

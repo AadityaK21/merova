@@ -7,7 +7,9 @@ The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, 
 | File | What it is |
 | --- | --- |
 | `index.html` | Home: hero, what Merova is, the apps (Merova Fit + next app), launch waitlist, FAQ |
+| `fit.html` | Merova Fit page: features, how it works, coaches, plans, your data |
 | `about.html` | The solo-founder story |
+| `brand.html` | Brand kit: logo downloads, colours, type, logo rules |
 | `contact.html` | Emails, business details and the contact form |
 | `privacy.html` | Privacy policy (Razorpay + Play Store) |
 | `terms.html` | Terms of service |
@@ -18,7 +20,9 @@ The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, 
 | `assets/css/style.css` | All styles. Colours and fonts are at the top |
 | `assets/js/main.js` | Mobile menu, form sending (contact + waitlist), copy buttons, motion. **The Web3Forms key goes at the top of this file** |
 | `assets/fonts/` | Sora and IBM Plex Mono, self-hosted (no Google Fonts requests) |
-| `assets/brand/` | Logos, icons and the link-preview image from the logo kit |
+| `assets/brand/` | Logos and icons from the logo kit, plus `merova-brand-kit.zip` (downloaded from /brand) |
+| `assets/og/` | Link preview images, one per page (what WhatsApp, LinkedIn and X show when someone shares a link) |
+| `.well-known/security.txt` | Tells security researchers where to report a problem (support@merova.app). Renew the `Expires` date every year |
 | `CNAME` | Tells GitHub Pages the site lives at merova.app |
 | `.nojekyll` | Tells GitHub Pages to serve files as they are |
 | `site.webmanifest`, `robots.txt`, `sitemap.xml`, favicons | SEO and icons |
@@ -42,7 +46,8 @@ Every blank on the site looks like `[THIS]` with a dashed box around it. Search 
 | `[BUSINESS ADDRESS]` | contact, privacy, terms, refund, shipping | **Razorpay checks for an address** |
 | `[PHONE, optional]` | contact | Razorpay likes a phone number; delete the row if you don't want one public |
 | `[CITY]` | terms | City whose courts handle disputes (e.g. New Delhi) |
-| `[PRICING TBD]` | index, terms | Razorpay wants prices visible somewhere (the app is fine too) |
+| `[PRICING TBD]` | index, fit, terms | Razorpay wants prices visible somewhere (the app is fine too) |
+| `[WHAT'S IN FREE]` | fit | What the free version of Merova Fit includes |
 | `[IN-APP PATH ...]` | refund, delete-account | Where Cancel plan / Delete account sits in the app |
 | `[CHECK THIS LIST MATCHES THE QUIZ]` | privacy | Make the list match the real onboarding questions |
 | `[24 hours]`, `[7]`, returns rule | refund | Call cancellation window and shop return rules |
@@ -67,6 +72,11 @@ The Web3Forms key is meant to be public, so it's fine in the code. Until the key
 - The Merova Fit phone drawing plays once (day score fills, workouts tick, water fills) when it scrolls into view.
 - Pages crossfade when you click between them (Chrome, Edge and Safari; other browsers just load normally).
 - FAQ answers slide open.
+- Sections ease in as you scroll to them.
+- The Merova Fit card has a soft sage light that follows the pointer, and the "Next app" mark slowly traces itself.
+- On the Merova Fit page the phone drawing plays and then floats.
+- Policy pages show a thin reading progress bar under the header (Chrome and Edge).
+- A back-to-top button appears on long pages.
 - Everything is switched off for visitors who ask their device for reduced motion.
 
 ## Security on the site
@@ -144,7 +154,7 @@ Name.com > My Domains > merova.app > **Manage DNS Records**.
 
 | Type | Host | Value |
 | --- | --- | --- |
-| MX | *(empty)* | `smtp.google.com` (priority 1) |
+| MX | *(empty)* | The five Google records: `aspmx.l.google.com` and `alt1` to `alt4.aspmx.l.google.com` |
 | TXT | *(empty)* | `v=spf1 include:_spf.google.com ~all` |
 | TXT | `google._domainkey` | Google DKIM key |
 | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:aaditya@merova.app` |

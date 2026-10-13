@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Merova | Simple apps for everyday life</title>
+<title>Merova - Simple apps for everyday life</title>
 <meta name="description" content="Merova is an independent app studio making simple, focused apps for everyday life. Merova Fit, a fitness coaching app, is the first.">
 <link rel="canonical" href="https://merova.app/">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.web3forms.com; form-action 'self' https://api.web3forms.com; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
@@ -16,16 +16,20 @@
 <link rel="manifest" href="site.webmanifest">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Merova">
-<meta property="og:title" content="Merova | Simple apps for everyday life">
+<meta property="og:title" content="Merova - Simple apps for everyday life">
 <meta property="og:description" content="Merova is an independent app studio making simple, focused apps for everyday life. Merova Fit, a fitness coaching app, is the first.">
 <meta property="og:url" content="https://merova.app/">
-<meta property="og:image" content="https://merova.app/assets/brand/og-image.png">
+<meta property="og:image" content="https://merova.app/assets/og/home.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The Merova logo">
+<meta property="og:image:alt" content="Merova - Simple apps for everyday life">
 <meta property="og:locale" content="en_IN">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Merova - Simple apps for everyday life">
+<meta name="twitter:description" content="Merova is an independent app studio making simple, focused apps for everyday life. Merova Fit, a fitness coaching app, is the first.">
+<meta name="twitter:image" content="https://merova.app/assets/og/home.png">
 <link rel="preload" href="assets/fonts/sora-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/style.css">
 <script src="assets/js/main.js" defer></script>
 <script type="application/ld+json">
@@ -137,7 +141,7 @@
           <p class="muted">Each Merova app has its own name, its own job and its own address on merova.app.</p>
         </div>
         <div class="apps">
-          <article class="app-fit" aria-labelledby="fit-title">
+          <article class="app-fit" data-demo aria-labelledby="fit-title">
             <div class="app-fit__main">
               <div class="app-fit__top">
                 <img src="assets/brand/merova-fit-lockup-bone.svg" alt="Merova Fit" width="150" height="26">
@@ -163,6 +167,7 @@
               </dl>
               <div class="actions">
                 <a class="btn btn--fit" href="https://fit.merova.app">Open Merova Fit</a>
+                <a class="btn btn--ghost" href="/fit">More about Merova Fit</a>
               </div>
             </div>
             <div class="app-fit__art">
@@ -202,17 +207,17 @@
           </article>
 
           <article class="app-next" aria-labelledby="next-title">
+            <p class="label">in the works</p>
+            <div class="app-next__stage">
             <svg class="app-next__mark" viewBox="12 18 76 64" aria-hidden="true" focusable="false">
               <polygon class="r" points="84,78 84,22 42,64 42,78"/>
               <polygon points="16,78 16,22 58,64 58,78"/>
             </svg>
-            <div class="stack">
-              <p class="label">in the works</p>
-              <div>
-                <h3 class="h3" id="next-title">Next app</h3>
-                <p>It gets a name when it's ready to use.</p>
-                <p><a class="link" href="#waitlist">Get told when it's out</a></p>
-              </div>
+            </div>
+            <div>
+              <h3 class="h3" id="next-title">Next app</h3>
+              <p>It gets a name when it's ready to use.</p>
+              <p><a class="link" href="#waitlist">Get told when it's out</a></p>
             </div>
           </article>
         </div>
@@ -308,9 +313,10 @@
         <ul>
           <li><a href="/">Home</a></li>
           <li><a href="/#apps">Apps</a></li>
+          <li><a href="/fit">Merova Fit</a></li>
           <li><a href="/about">About</a></li>
+          <li><a href="/brand">Brand kit</a></li>
           <li><a href="/contact">Contact</a></li>
-          <li><a href="https://fit.merova.app">Merova Fit</a></li>
         </ul>
       </nav>
       <nav class="footer__col" aria-label="Legal">
@@ -336,6 +342,7 @@
       <p class="label">Merova is run by Aaditya Kumawat, sole proprietor, India.</p>
     </div>
   </div>
+  <a class="to-top" href="#main" aria-label="Back to top"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg></a>
 </footer>
 </body>
 </html>

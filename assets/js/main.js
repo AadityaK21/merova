@@ -86,20 +86,69 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  /* ---------- Merova Fit phone demo plays once when it comes into view ---------- */
-  var fitCard = document.querySelector(".app-fit");
-  if (fitCard && "IntersectionObserver" in window && !reduceMotion) {
+  /* ---------- Merova Fit phone demos play once when they come into view ---------- */
+  var demos = Array.prototype.slice.call(document.querySelectorAll("[data-demo]"));
+  if (demos.length && "IntersectionObserver" in window && !reduceMotion) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
-        if (en.isIntersecting) { fitCard.classList.add("is-live"); io.disconnect(); }
+        if (en.isIntersecting) { en.target.classList.add("is-live"); io.unobserve(en.target); }
       });
-    }, { threshold: 0.45 });
-    io.observe(fitCard);
-  } else if (fitCard) {
-    fitCard.classList.add("is-live");
+    }, { threshold: 0.35 });
+    demos.forEach(function (el) { io.observe(el); });
+  } else {
+    demos.forEach(function (el) { el.classList.add("is-live"); });
   }
 
-  /* ---------- Copy buttons (contact page) ---------- */
+  /* ---------- Merova Fit card: a soft light follows the pointer ---------- */
+  var fitCard = document.querySelector(".app-fit");
+  if (fitCard && finePointer && !reduceMotion) {
+    fitCard.addEventListener("pointermove", function (e) {
+      var r = fitCard.getBoundingClientRect();
+      fitCard.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      fitCard.style.setProperty("--my", (e.clientY - r.top) + "px");
+      fitCard.classList.add("is-lit");
+    });
+    fitCard.addEventListener("pointerleave", function () { fitCard.classList.remove("is-lit"); });
+  }
+
+  /* ---------- Sections ease in as you scroll to them ---------- */
+  var REVEAL = ".intro__head, .cell, .apps__head, .app-fit, .app-next, .cta__copy, .waitlist, .faq__head, " +
+    ".faq__item, .split, .mailbox, .business, .form, .feat, .how li, .logo-tile, .swatch, .type, .rules > div, " +
+    ".brand-mark__copy, .fit-cta";
+  if ("IntersectionObserver" in window && !reduceMotion) {
+    var vh = window.innerHeight;
+    var toReveal = Array.prototype.slice.call(document.querySelectorAll(REVEAL)).filter(function (el) {
+      return el.getBoundingClientRect().top > vh * 0.9; // leave what's already on screen alone
+    });
+    var seen = new IntersectionObserver(function (entries) {
+      var batch = 0;
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        en.target.style.setProperty("--d", (Math.min(batch++, 5) * 0.06) + "s");
+        en.target.classList.add("is-in");
+        seen.unobserve(en.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px" });
+    toReveal.forEach(function (el) { el.classList.add("reveal"); seen.observe(el); });
+    // never leave anything hidden (e.g. a jump to #faq or print)
+    window.addEventListener("beforeprint", function () { toReveal.forEach(function (el) { el.classList.add("is-in"); }); });
+  }
+
+  /* ---------- Back to top ---------- */
+  var toTop = document.querySelector(".to-top");
+  if (toTop) {
+    var onScrollTop = function () { toTop.classList.toggle("is-on", window.scrollY > window.innerHeight * 1.5); };
+    window.addEventListener("scroll", onScrollTop, { passive: true });
+    onScrollTop();
+    toTop.addEventListener("click", function (e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+      var main = document.getElementById("main");
+      if (main) { main.setAttribute("tabindex", "-1"); main.focus({ preventScroll: true }); }
+    });
+  }
+
+  /* ---------- Copy buttons (contact page emails, brand page colours) ---------- */
   document.querySelectorAll("[data-copy]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var text = btn.getAttribute("data-copy");
@@ -108,10 +157,14 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
         btn.classList.add("is-done");
         setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("is-done"); }, 1600);
       };
+      var fallback = function () {
+        if (text.indexOf("@") > 0) { window.location.href = "mailto:" + text; }
+        else { btn.textContent = text; }
+      };
       if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(done, function () { window.location.href = "mailto:" + text; });
+        navigator.clipboard.writeText(text).then(done, fallback);
       } else {
-        window.location.href = "mailto:" + text;
+        fallback();
       }
     });
   });

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://merova.app/</loc><lastmod>2026-10-12</lastmod></url>
-  <url><loc>https://merova.app/about</loc><lastmod>2026-10-12</lastmod></url>
-  <url><loc>https://merova.app/contact</loc><lastmod>2026-10-12</lastmod></url>
-  <url><loc>https://merova.app/privacy</loc><lastmod>2026-10-12</lastmod></url>
-  <url><loc>https://merova.app/terms</loc><lastmod>2026-10-12</lastmod></url>
-  <url><loc>https://merova.app/refund</loc><lastmod>2026-10-12</lastmod></url>
-  <url><loc>https://merova.app/shipping</loc><lastmod>2026-10-12</lastmod></url>
-  <url><loc>https://merova.app/delete-account</loc><lastmod>2026-10-12</lastmod></url>
+  <url><loc>https://merova.app/</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/fit</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/about</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/contact</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/brand</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/privacy</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/terms</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/refund</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/shipping</loc><lastmod>2026-10-13</lastmod></url>
+  <url><loc>https://merova.app/delete-account</loc><lastmod>2026-10-13</lastmod></url>
 </urlset>

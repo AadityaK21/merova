@@ -1,5 +1,6 @@
-/* Merova: small progressive enhancements. Every page works without this file;
-   it adds the mobile menu, form sending, copy buttons, the cursor and the motion. */
+/* Merova: progressive enhancements. Every page works without this file.
+   It adds the mobile menu, form sending, copy buttons, the hero object you can turn,
+   and a few scroll moments that carry the story. No libraries. */
 
 /* ------------------------------------------------------------------------
    SETTINGS: the only line you need to edit.
@@ -16,10 +17,12 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   var hasIO = "IntersectionObserver" in window;
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
 
   /* ---------- Mobile menu ---------- */
-  var toggle = document.querySelector(".nav-toggle");
+  var toggle = $(".nav-toggle");
   var nav = document.getElementById("site-nav");
   if (toggle && nav) {
     var setOpen = function (open) {
@@ -27,217 +30,288 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
       nav.classList.toggle("is-open", open);
     };
-    toggle.addEventListener("click", function () {
-      setOpen(toggle.getAttribute("aria-expanded") !== "true");
-    });
-    nav.addEventListener("click", function (e) {
-      if (e.target.closest("a")) setOpen(false);
-    });
+    toggle.addEventListener("click", function () { setOpen(toggle.getAttribute("aria-expanded") !== "true"); });
+    nav.addEventListener("click", function (e) { if (e.target.closest("a")) setOpen(false); });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
-        setOpen(false);
-        toggle.focus();
+      if (e.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") { setOpen(false); toggle.focus(); }
+    });
+    window.matchMedia("(min-width: 800px)").addEventListener("change", function (mq) { if (mq.matches) setOpen(false); });
+  }
+
+  var header = $(".site-header");
+  var headerBrand = header && $(".brand", header);
+
+  /* ======================================================================
+     The Fold: two sheets in 3D. Drag (or use the arrow keys) to turn them;
+     seen head on they line up into the Merova mark.
+     ====================================================================== */
+  var fold = $("[data-fold]");
+  var hero = $(".hero");
+  var foldScroll = 0;
+  var renderFold = function () {};
+  if (fold) {
+    var scene = $(".fold3d__scene", fold);
+    var obj = $(".fold3d__obj", fold);
+    var ground = $(".fold3d__ground", fold);
+    var angleOut = $("[data-angle]", fold);
+    var stateOut = $("[data-state]", fold);
+    var REST = { ry: -18, rx: 8 };
+    var DEPTH = 90;
+    var st = { ry: REST.ry, rx: REST.rx, d: DEPTH };
+    var drag = null, tween = null, spin = null, aligned = false, idleText = finePointer ? "Drag to turn" : "Swipe to turn";
+
+    // light comes from the front left; a sheet facing it is brighter
+    var IV = [246, 244, 238];
+    var tone = function (k) { return "rgb(" + IV.map(function (c) { return Math.round(c * k); }).join(",") + ")"; };
+    var lightFor = function (ry) { return 0.55 + 0.45 * Math.max(0, Math.cos((ry + 35) * Math.PI / 180)); };
+
+    renderFold = function () {
+      var p = foldScroll;
+      var ry = st.ry * (1 - p), rx = st.rx * (1 - p);
+      var I = lightFor(ry);
+      obj.style.setProperty("--ry", ry.toFixed(2));
+      obj.style.setProperty("--rx", rx.toFixed(2));
+      obj.style.setProperty("--d", st.d.toFixed(1));
+      obj.style.setProperty("--s", (1 - p * 0.12).toFixed(3));
+      ground.style.setProperty("--ry", ry.toFixed(2));
+      ground.style.setProperty("--s", (1 - p * 0.12).toFixed(3));
+      obj.style.setProperty("--l-hi", tone(0.78 + 0.22 * I));
+      obj.style.setProperty("--l-lo", tone(0.6 + 0.24 * I));
+      obj.style.setProperty("--l-edge", tone(0.36 + 0.2 * Math.abs(Math.sin(ry * Math.PI / 180))));
+      obj.style.setProperty("--r-hi", tone(0.36 + 0.16 * I));
+      obj.style.setProperty("--r-lo", tone(0.22 + 0.1 * I));
+      obj.style.setProperty("--r-edge", tone(0.14 + 0.1 * Math.abs(Math.sin(ry * Math.PI / 180))));
+      var shown = Math.round(ry);
+      angleOut.textContent = (shown < 0 ? "−" : "") + Math.abs(shown) + "°";
+      var nowAligned = Math.abs(ry) < 0.75 && rx < 1;
+      if (nowAligned !== aligned) {
+        aligned = nowAligned;
+        fold.classList.toggle("is-aligned", aligned);
+      }
+      stateOut.textContent = aligned ? "Lined up: the Merova mark" : (drag ? "Turning" : idleText);
+      scene.setAttribute("aria-valuenow", String(Math.round(st.ry)));
+      scene.setAttribute("aria-valuetext", aligned ? "Lined up into the Merova logo" : "Turned " + Math.abs(Math.round(st.ry)) + " degrees " + (st.ry < 0 ? "left" : "right"));
+    };
+
+    var stopMotion = function () {
+      if (tween) { cancelAnimationFrame(tween); tween = null; }
+      if (spin) { cancelAnimationFrame(spin); spin = null; }
+    };
+    var easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
+    var animateTo = function (target, ms) {
+      stopMotion();
+      if (reduceMotion || ms === 0) {
+        Object.keys(target).forEach(function (k) { st[k] = target[k]; });
+        renderFold();
+        return;
+      }
+      var from = { ry: st.ry, rx: st.rx, d: st.d }, t0 = performance.now();
+      var step = function (now) {
+        var t = clamp((now - t0) / ms, 0, 1), e = easeOut(t);
+        Object.keys(target).forEach(function (k) { st[k] = from[k] + (target[k] - from[k]) * e; });
+        renderFold();
+        tween = t < 1 ? requestAnimationFrame(step) : null;
+      };
+      tween = requestAnimationFrame(step);
+    };
+
+    // first impression: the sheets unfold from edge-on and settle at rest
+    if (!reduceMotion) {
+      st.ry = -66; st.d = 10; st.rx = 14;
+      renderFold();
+      setTimeout(function () { animateTo({ ry: REST.ry, rx: REST.rx, d: DEPTH }, 1500); }, 250);
+    } else {
+      renderFold();
+    }
+
+    // drag with a little inertia; let go near the front and it snaps into the logo
+    scene.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      stopMotion();
+      drag = { x: e.clientX, y: e.clientY, ry: st.ry, rx: st.rx, t: performance.now(), v: 0, lastX: e.clientX, id: e.pointerId, moved: false };
+      fold.classList.add("is-dragging");
+    });
+    scene.addEventListener("pointermove", function (e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.abs(dx) > 3) { drag.moved = true; try { scene.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } }
+      if (!drag.moved) return;
+      var now = performance.now();
+      drag.v = (e.clientX - drag.lastX) / Math.max(8, now - drag.t);
+      drag.t = now; drag.lastX = e.clientX;
+      st.ry = clamp(drag.ry + dx * 0.32, -70, 70);
+      if (e.pointerType === "mouse") st.rx = clamp(drag.rx - dy * 0.1, 0, 22);
+      renderFold();
+    });
+    var endDrag = function (e) {
+      if (!drag || (e && e.pointerId !== drag.id)) return;
+      var v = drag.v * 16 * 0.32, moved = drag.moved;
+      drag = null;
+      fold.classList.remove("is-dragging");
+      if (!moved) { renderFold(); return; }
+      if (reduceMotion) { settle(); return; }
+      var glide = function () {
+        v *= 0.9;
+        st.ry = clamp(st.ry + v, -70, 70);
+        renderFold();
+        spin = Math.abs(v) > 0.05 ? requestAnimationFrame(glide) : null;
+        if (!spin) settle();
+      };
+      spin = requestAnimationFrame(glide);
+    };
+    var settle = function () {
+      if (Math.abs(st.ry) < 4) animateTo({ ry: 0, rx: 0 }, 420);
+      else renderFold();
+    };
+    scene.addEventListener("pointerup", endDrag);
+    scene.addEventListener("pointercancel", endDrag);
+    if (finePointer) {
+      scene.addEventListener("pointerenter", function () { fold.classList.add("is-hover"); });
+      scene.addEventListener("pointerleave", function () { fold.classList.remove("is-hover"); });
+    }
+
+    // keyboard: it's a slider
+    scene.addEventListener("keydown", function (e) {
+      var step = e.shiftKey ? 15 : 5, handled = true;
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") st.ry = clamp(st.ry - step, -70, 70);
+      else if (e.key === "ArrowRight" || e.key === "ArrowUp") st.ry = clamp(st.ry + step, -70, 70);
+      else if (e.key === "Home") { animateTo({ ry: 0, rx: 0 }, 600); }
+      else if (e.key === "End") { animateTo(REST, 600); }
+      else handled = false;
+      if (handled) {
+        e.preventDefault();
+        if (e.key.indexOf("Arrow") === 0) { stopMotion(); if (Math.abs(st.ry) < 0.5) { st.rx = 0; } renderFold(); }
       }
     });
-    window.matchMedia("(min-width: 800px)").addEventListener("change", function (mq) {
-      if (mq.matches) setOpen(false);
+    $$("[data-fold]", fold).forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.getAttribute("data-fold") === "align") animateTo({ ry: 0, rx: 0, d: DEPTH }, 900);
+        else animateTo({ ry: REST.ry, rx: REST.rx, d: DEPTH }, 900);
+      });
     });
   }
 
-  /* ---------- Header firms up once you scroll ---------- */
-  var header = document.querySelector(".site-header");
-  var headerBrand = header && header.querySelector(".brand");
-
-  /* ---------- Hero: the Fold answers the pointer and becomes the logo as you scroll ---------- */
-  var fold = document.querySelector(".hero .fold");
-  var hero = document.querySelector(".hero");
-  var figure = fold && fold.closest(".hero__figure");
-  var tx = 0, ty = 0, p = 0, docked = false, foldQueued = false;
-  var paintFold = function () {
-    foldQueued = false;
-    fold.style.setProperty("--tx", tx.toFixed(3));
-    fold.style.setProperty("--ty", ty.toFixed(3));
-    fold.style.setProperty("--p", p.toFixed(3));
-  };
-  var queueFold = function () {
-    if (fold && !foldQueued) { foldQueued = true; window.requestAnimationFrame(paintFold); }
-  };
-  if (fold && hero && !reduceMotion) {
-    if (finePointer) {
-      hero.addEventListener("pointermove", function (e) {
-        var r = fold.getBoundingClientRect();
-        tx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2)));
-        ty = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (window.innerHeight / 2)));
-        if (figure) figure.classList.add("is-live");
-        queueFold();
-      });
-      hero.addEventListener("pointerleave", function () {
-        tx = 0; ty = 0;
-        if (figure) figure.classList.remove("is-live");
-        queueFold();
-      });
-    }
-  }
-
+  /* ---------- Scroll: header, the Fold settling into the logo, the header logo docking ---------- */
+  var docked = false, scrollQueued = false;
   var onScroll = function () {
+    scrollQueued = false;
     var y = window.scrollY;
     if (header) header.classList.toggle("is-scrolled", y > 8);
     if (fold && hero && !reduceMotion) {
-      p = Math.max(0, Math.min(1, y / (hero.offsetHeight * 0.75)));
-      queueFold();
-      // as the drawing finishes turning into the logo, the header logo settles into place
+      var p = clamp(y / (hero.offsetHeight * 0.7), 0, 1);
+      if (p !== foldScroll && (p < 1 || foldScroll < 1)) { foldScroll = p; renderFold(); }
       if (headerBrand && p > 0.85 && !docked) {
         docked = true;
         headerBrand.classList.remove("is-docking");
         void headerBrand.offsetWidth;
         headerBrand.classList.add("is-docking");
-      } else if (p < 0.4) {
-        docked = false;
-      }
+      } else if (p < 0.4) { docked = false; }
     }
   };
-  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("scroll", function () {
+    if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(onScroll); }
+  }, { passive: true });
   onScroll();
 
-  /* ---------- Merova Fit showcase: real screens, tabs, tilt, one short tour ---------- */
-  $$("[data-showcase]").forEach(function (box) {
-    var screens = $$(".phone2__screen", box);
-    var tabs = $$(".showcase__tab", box);
-    var phone = box.querySelector(".phone2");
-    var frame = box.querySelector(".phone2__frame");
-    var order = screens.map(function (s) { return s.getAttribute("data-screen"); });
-    var current = 0, tour = null, touched = false;
-
-    var show = function (i) {
-      current = (i + screens.length) % screens.length;
-      screens.forEach(function (s, k) {
-        var on = k === current;
-        s.classList.toggle("is-on", on);
-        if (on) { s.removeAttribute("aria-hidden"); s.loading = "eager"; } else { s.setAttribute("aria-hidden", "true"); }
-      });
-      tabs.forEach(function (t) {
-        t.setAttribute("aria-pressed", t.getAttribute("data-screen") === order[current] ? "true" : "false");
-      });
-    };
-    var stopTour = function () { touched = true; if (tour) { clearTimeout(tour); tour = null; } };
-
-    tabs.forEach(function (t) {
-      t.addEventListener("click", function () { stopTour(); show(order.indexOf(t.getAttribute("data-screen"))); });
+  /* ---------- The studio statement lights up word by word as you read down ---------- */
+  var statement = $("[data-words]");
+  if (statement && !reduceMotion) {
+    var words = [];
+    var text = statement.textContent.trim().split(/\s+/);
+    statement.textContent = "";
+    text.forEach(function (w, i) {
+      var s = document.createElement("span");
+      s.className = "w";
+      s.textContent = w;
+      statement.appendChild(s);
+      if (i < text.length - 1) statement.appendChild(document.createTextNode(" "));
+      words.push(s);
     });
-    if (phone) {
-      phone.addEventListener("click", function () { stopTour(); show(current + 1); });
-    }
-    if (frame && finePointer && !reduceMotion) {
-      phone.addEventListener("pointermove", function (e) {
-        var r = phone.getBoundingClientRect();
-        var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-        frame.style.setProperty("--rx", (x * 12).toFixed(2));
-        frame.style.setProperty("--ry", (-y * 9).toFixed(2));
-      });
-      phone.addEventListener("pointerleave", function () {
-        frame.style.setProperty("--rx", "0");
-        frame.style.setProperty("--ry", "0");
-      });
-    }
-    // fetch the other screens a little before the phone scrolls into view, so switching never flashes
+    var lit = -1, active = false, queued = false;
+    var paintWords = function () {
+      queued = false;
+      var r = statement.getBoundingClientRect(), vh = window.innerHeight;
+      var p = clamp((vh * 0.82 - r.top) / (r.height + vh * 0.3), 0, 1);
+      var n = Math.round(p * words.length);
+      if (n !== lit) {
+        words.forEach(function (w, i) { w.classList.toggle("on", i < n); });
+        lit = n;
+      }
+    };
+    var queueWords = function () { if (active && !queued) { queued = true; requestAnimationFrame(paintWords); } };
     if (hasIO) {
-      var near = new IntersectionObserver(function (entries) {
-        if (!entries[0].isIntersecting) return;
-        near.disconnect();
-        screens.forEach(function (s) { s.loading = "eager"; });
-      }, { rootMargin: "400px 0px" });
-      near.observe(box);
-    }
-    // a single short tour the first time it comes into view (not on reduced motion)
-    if (hasIO && !reduceMotion && screens.length > 1) {
-      var seen = new IntersectionObserver(function (entries) {
-        if (!entries[0].isIntersecting) return;
-        seen.disconnect();
-        var step = 0;
-        var next = function () {
-          if (touched) return;
-          step += 1;
-          show(step % screens.length);
-          if (step < screens.length) tour = setTimeout(next, 2400);
-        };
-        tour = setTimeout(next, 2200);
-      }, { threshold: 0.6 });
-      seen.observe(box);
-    }
+      new IntersectionObserver(function (en) { active = en[0].isIntersecting; if (active) queueWords(); }).observe(statement);
+    } else { active = true; }
+    window.addEventListener("scroll", queueWords, { passive: true });
+    paintWords();
+  }
+
+  /* ---------- Product story: the phone stays, the chapters change its screen ---------- */
+  $$("[data-story]").forEach(function (story) {
+    var stage = $(".story__stage", story);
+    if (!stage || !hasIO) return;
+    var screens = $$(".phone__screen", stage);
+    var steps = $$(".story__step", story);
+    var wide = window.matchMedia("(min-width: 900px)");
+    var show = function (key) {
+      screens.forEach(function (s) {
+        var on = s.getAttribute("data-screen") === key;
+        s.classList.toggle("is-on", on);
+        if (on) s.loading = "eager";
+      });
+      steps.forEach(function (st) { st.classList.toggle("is-active", st.getAttribute("data-screen") === key); });
+    };
+    var setLive = function () { story.classList.toggle("is-live", wide.matches); };
+    setLive();
+    wide.addEventListener("change", setLive);
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) show(en.target.getAttribute("data-screen")); });
+    }, { rootMargin: "-45% 0px -45% 0px" });
+    steps.forEach(function (s) { io.observe(s); });
+    // fetch the other screens shortly before the stage comes into view
+    var near = new IntersectionObserver(function (en) {
+      if (!en[0].isIntersecting) return;
+      near.disconnect();
+      screens.forEach(function (s) { s.loading = "eager"; });
+    }, { rootMargin: "600px 0px" });
+    near.observe(story);
   });
 
-  /* ---------- Merova Fit card: a soft light follows the pointer ---------- */
-  var fitCard = document.querySelector(".app-fit");
-  if (fitCard && finePointer && !reduceMotion) {
-    fitCard.addEventListener("pointermove", function (e) {
-      var r = fitCard.getBoundingClientRect();
-      fitCard.style.setProperty("--mx", (e.clientX - r.left) + "px");
-      fitCard.style.setProperty("--my", (e.clientY - r.top) + "px");
-      fitCard.classList.add("is-lit");
-    });
-    fitCard.addEventListener("pointerleave", function () { fitCard.classList.remove("is-lit"); });
-  }
-
-  /* ---------- Scroll story: things ease in, headings rise, rules draw ---------- */
-  var REVEAL = ".intro__head > p, .cell, .apps__head > p, .app-fit, .app-next, .cta__copy > p, .cta__copy .actions, .waitlist, " +
-    ".faq__head > p, .faq__item, .split, .mailbox, .business, .form, .feat, .how li, .logo-tile, .swatch, .type, " +
-    ".rules > div, .brand-mark__copy > p, .fit-cta > p, .fit-cta .actions, .feats__more";
-  var HEADS = "main .h2";
-  var LINES = ".cells, .faq__list, .how, .list-lines, .types, .facts, .mailboxes, .app-next__spec, .band";
-  var MARKS = ".eyebrow, .frame--marks";
-  if (hasIO && !reduceMotion) {
-    var vh = window.innerHeight;
-    var below = function (el) { return el.getBoundingClientRect().top > vh * 0.92; };
-    var watch = [];
-    var tag = function (sel, cls) {
-      $$(sel).forEach(function (el) {
-        if (cls) el.classList.add(cls);
-        if (below(el)) watch.push(el); else el.classList.add("is-in");
-      });
-    };
-    tag(REVEAL, "reveal");
-    tag(HEADS, "rv-head");
-    tag(LINES, "rv-line");
-    tag(MARKS, "");
-    var seenIO = new IntersectionObserver(function (entries) {
-      var batch = 0;
+  /* ---------- Chapter indicator ---------- */
+  var chapter = $(".chapter");
+  var chapters = $$("[data-chapter]");
+  if (chapter && chapters.length && hasIO) {
+    var cn = $(".chapter__n", chapter), cname = $(".chapter__name", chapter);
+    var inFirst = true, inFoot = false;
+    var sync = function () { chapter.classList.toggle("is-hidden", inFirst || inFoot); };
+    var cio = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
-        if (en.target.classList.contains("reveal")) {
-          en.target.style.setProperty("--d", (Math.min(batch++, 4) * 0.07) + "s");
-        }
-        en.target.classList.add("is-in");
-        seenIO.unobserve(en.target);
+        var n = en.target.getAttribute("data-chapter");
+        cn.textContent = n;
+        cname.textContent = en.target.getAttribute("data-chapter-name");
+        inFirst = n === "01";
+        sync();
       });
-    }, { rootMargin: "0px 0px -8% 0px" });
-    watch.forEach(function (el) { seenIO.observe(el); });
-    // never leave anything hidden: printing, or jumping straight to an anchor further down
-    var showAll = function () { watch.forEach(function (el) { el.classList.add("is-in"); }); };
-    window.addEventListener("beforeprint", showAll);
-    setTimeout(function () {
-      if (location.hash) {
-        watch.forEach(function (el) { if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add("is-in"); });
-      }
-    }, 300);
-  } else {
-    $$(".app-next").forEach(function (el) { el.classList.add("is-in"); });
+    }, { rootMargin: "-50% 0px -50% 0px" });
+    chapters.forEach(function (c) { cio.observe(c); });
+    var foot = $(".site-footer");
+    if (foot) new IntersectionObserver(function (en) { inFoot = en[0].isIntersecting; sync(); }).observe(foot);
+    sync();
   }
 
-  /* ---------- Back to top ---------- */
-  var toTop = document.querySelector(".to-top");
-  if (toTop) {
-    var onScrollTop = function () { toTop.classList.toggle("is-on", window.scrollY > window.innerHeight * 1.5); };
-    window.addEventListener("scroll", onScrollTop, { passive: true });
-    onScrollTop();
-    toTop.addEventListener("click", function (e) {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-      var main = document.getElementById("main");
-      if (main) { main.setAttribute("tabindex", "-1"); main.focus({ preventScroll: true }); }
-    });
+  /* ---------- Section headings rise out of a mask (headings only) ---------- */
+  if (hasIO && !reduceMotion) {
+    var vh0 = window.innerHeight;
+    var heads = $$("main .h2").filter(function (h) { return h.getBoundingClientRect().top > vh0 * 0.9; });
+    var hio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("is-in"); hio.unobserve(en.target); } });
+    }, { rootMargin: "0px 0px -10% 0px" });
+    heads.forEach(function (h) { h.classList.add("rv"); hio.observe(h); });
+    window.addEventListener("beforeprint", function () { heads.forEach(function (h) { h.classList.add("is-in"); }); });
   }
 
-  /* ---------- Copy buttons (contact page emails, brand page colours) ---------- */
+  /* ---------- Copy buttons (contact emails, brand colours) ---------- */
   $$("[data-copy]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var text = btn.getAttribute("data-copy");
@@ -247,14 +321,10 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
         setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("is-done"); }, 1600);
       };
       var fallback = function () {
-        if (text.indexOf("@") > 0) { window.location.href = "mailto:" + text; }
-        else { btn.textContent = text; }
+        if (text.indexOf("@") > 0) { window.location.href = "mailto:" + text; } else { btn.textContent = text; }
       };
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(done, fallback);
-      } else {
-        fallback();
-      }
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+      else fallback();
     });
   });
 
@@ -266,53 +336,53 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     var currentToc = null;
     var spy = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
-        if (en.isIntersecting) {
-          if (currentToc) currentToc.classList.remove("is-active");
-          currentToc = byId[en.target.id];
-          if (currentToc) currentToc.classList.add("is-active");
-        }
+        if (!en.isIntersecting) return;
+        if (currentToc) currentToc.classList.remove("is-active");
+        currentToc = byId[en.target.id];
+        if (currentToc) currentToc.classList.add("is-active");
       });
     }, { rootMargin: "-20% 0px -70% 0px" });
-    Object.keys(byId).forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) spy.observe(el);
-    });
+    Object.keys(byId).forEach(function (id) { var el = document.getElementById(id); if (el) spy.observe(el); });
   }
 
-  /* ---------- Forms (contact + waitlist) via Web3Forms ---------- */
+  /* ---------- Forms (contact + launch list) via Web3Forms ---------- */
   var MESSAGES = {
-    contact: {
-      ok: "Message sent. You'll get a reply at the email you entered.",
-      fail: "Your message didn't send. Try again, or email hello@merova.app."
-    },
-    waitlist: {
-      ok: "You're on the list. We'll email you when it's out.",
-      fail: "That didn't go through. Try again, or email hello@merova.app."
-    }
+    contact: { ok: "Message sent. You'll get a reply at the email you entered.", fail: "Your message didn't send. Try again, or email hello@merova.app." },
+    waitlist: { ok: "You're on the list. We'll email you when it's out.", fail: "That didn't go through. Try again, or email hello@merova.app." }
   };
+  var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   $$("form[data-form]").forEach(function (form) {
     var kind = form.getAttribute("data-form");
     var msg = MESSAGES[kind] || MESSAGES.contact;
-    var status = form.querySelector(".form-status");
-    var button = form.querySelector("button[type=submit]");
+    var status = $(".form-status", form);
+    var button = $("button[type=submit]", form);
+    var show = function (state, text) { if (status) { status.dataset.state = state; status.textContent = text; } };
 
-    var show = function (state, text) {
-      if (!status) return;
-      status.dataset.state = state;
-      status.textContent = text;
+    $$("input, textarea", form).forEach(function (f) {
+      f.addEventListener("input", function () { if (f.getAttribute("aria-invalid")) { f.removeAttribute("aria-invalid"); show("", ""); } });
+    });
+
+    var check = function () {
+      var fields = $$("[required]", form);
+      for (var i = 0; i < fields.length; i++) {
+        var f = fields[i], v = f.value.trim();
+        var bad = !v || (f.type === "email" && !EMAIL.test(v));
+        if (bad) {
+          f.setAttribute("aria-invalid", "true");
+          f.focus();
+          var name = (f.labels && f.labels[0] ? f.labels[0].textContent : "this field").toLowerCase();
+          show("error", f.type === "email" && v ? "That email address doesn't look right." : "Please fill in " + name + ".");
+          return false;
+        }
+      }
+      return true;
     };
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      if (!WEB3FORMS_KEY || WEB3FORMS_KEY.indexOf("YOUR_") === 0) {
-        show("error", "This form isn't connected yet. Please email hello@merova.app instead.");
-        return;
-      }
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
+      if (!WEB3FORMS_KEY || WEB3FORMS_KEY.indexOf("YOUR_") === 0) { show("error", "This form isn't connected yet. Please email hello@merova.app instead."); return; }
+      if (!check()) return;
       var data = new FormData(form);
       data.append("access_key", WEB3FORMS_KEY);
       if (kind === "waitlist") {
@@ -321,120 +391,17 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
         data.delete("interest");
         data.append("interest", picks.join(", "));
       }
-
       var original = button.innerHTML;
       button.disabled = true;
       button.textContent = "Sending…";
       show("", "");
-
       fetch(form.action, { method: "POST", headers: { Accept: "application/json" }, body: data })
-        .then(function (res) {
-          return res.json().then(function (body) { return { ok: res.ok, body: body }; });
-        })
+        .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
         .then(function (r) {
-          if (r.ok && r.body && r.body.success) {
-            form.reset();
-            show("ok", msg.ok);
-          } else {
-            show("error", msg.fail);
-          }
+          if (r.ok && r.body && r.body.success) { form.reset(); show("ok", msg.ok); } else { show("error", msg.fail); }
         })
         .catch(function () { show("error", msg.fail); })
-        .then(function () {
-          button.disabled = false;
-          button.innerHTML = original;
-        });
+        .then(function () { button.disabled = false; button.innerHTML = original; });
     });
   });
-
-  /* ---------- Custom cursor: a dot, a ring that trails it, and a label on things you can open ----------
-     Only for a real mouse. Touch screens and keyboards keep the normal behaviour; form fields
-     keep the normal text cursor. The ring only animates while it is catching up. */
-  if (finePointer) {
-    var ring = document.createElement("div");
-    var dot = document.createElement("div");
-    ring.className = "cursor__ring";
-    dot.className = "cursor__dot";
-    ring.setAttribute("aria-hidden", "true");
-    dot.setAttribute("aria-hidden", "true");
-    var shape = document.createElement("div");
-    shape.className = "cursor__shape";
-    var label = document.createElement("span");
-    label.className = "cursor__label";
-    shape.appendChild(label);
-    ring.appendChild(shape);
-    document.body.appendChild(ring);
-    document.body.appendChild(dot);
-    doc.classList.add("has-cursor", "cur-hidden");
-
-    var mx = -100, my = -100, rx = -100, ry = -100, raf = 0;
-    var ease = reduceMotion ? 1 : 0.2;
-    var place = function (el, x, y) { el.style.transform = "translate3d(" + x + "px," + y + "px,0)"; };
-    var loop = function () {
-      rx += (mx - rx) * ease;
-      ry += (my - ry) * ease;
-      place(ring, rx, ry);
-      if (Math.abs(mx - rx) > 0.15 || Math.abs(my - ry) > 0.15) raf = requestAnimationFrame(loop);
-      else { raf = 0; place(ring, mx, my); }
-    };
-
-    var PILL = ".btn, [data-cursor], .copy, .showcase__tab, .to-top, .faq__item summary";
-    var LINK = "a, button, summary, label, select, [role='button']";
-    var FIELD = "input:not([type='checkbox']):not([type='radio']):not([type='submit']), textarea, select, [contenteditable]";
-    var labelFor = function (el) {
-      if (el.hasAttribute("data-cursor")) return el.getAttribute("data-cursor");
-      if (el.classList.contains("copy")) return "Copy";
-      if (el.classList.contains("showcase__tab")) return "View";
-      if (el.classList.contains("to-top")) return "Top ↑";
-      if (el.tagName === "SUMMARY") return el.parentElement.open ? "Close" : "Open";
-      if (el.tagName === "BUTTON") return el.type === "submit" ? "Send" : "Open";
-      var href = el.getAttribute("href") || "";
-      if (el.hasAttribute("download")) return "Download ↓";
-      if (href.charAt(0) === "#") return "Jump ↓";
-      if (href.indexOf("mailto:") === 0) return "Email";
-      if (/^https?:/.test(href) && href.indexOf(location.host) === -1) return "Open ↗";
-      return "View";
-    };
-    var setState = function (target) {
-      var cls = doc.classList;
-      if (!target || !target.closest) return;
-      if (target.closest(FIELD)) { cls.add("cur-hidden"); return; }
-      cls.remove("cur-hidden");
-      var pill = target.closest(PILL);
-      if (pill) {
-        label.textContent = labelFor(pill);
-        ring.style.setProperty("--pill-w", (label.scrollWidth + 30) + "px");
-        // dark pill on light surfaces (and on bone or sage buttons), light pill on dark ones
-        var theme = pill.closest(".app-fit, .s-light, .s-dark, .site-header");
-        var onLight = !!theme && theme.classList.contains("s-light");
-        var filled = pill.classList.contains("btn--primary") || pill.classList.contains("btn--fit");
-        cls.toggle("cur-light", onLight !== filled);
-        cls.add("cur-pill");
-        cls.remove("cur-link");
-        return;
-      }
-      cls.remove("cur-pill", "cur-light");
-      cls.toggle("cur-link", !!target.closest(LINK));
-    };
-
-    document.addEventListener("pointermove", function (e) {
-      if (e.pointerType && e.pointerType !== "mouse") return;
-      mx = e.clientX; my = e.clientY;
-      place(dot, mx, my);
-      if (doc.classList.contains("cur-hidden") && !e.target.closest(FIELD)) {
-        doc.classList.remove("cur-hidden");
-        if (rx < 0) { rx = mx; ry = my; }
-      }
-      if (!raf) raf = requestAnimationFrame(loop);
-    }, { passive: true });
-    document.addEventListener("pointerover", function (e) { if (!e.pointerType || e.pointerType === "mouse") setState(e.target); });
-    document.addEventListener("pointerdown", function () { doc.classList.add("cur-down"); });
-    document.addEventListener("pointerup", function () { doc.classList.remove("cur-down"); });
-    document.addEventListener("click", function (e) {
-      // labels like OPEN/CLOSE on the FAQ change after a click
-      setTimeout(function () { setState(e.target); }, 0);
-    });
-    document.documentElement.addEventListener("mouseleave", function () { doc.classList.add("cur-hidden"); });
-    window.addEventListener("blur", function () { doc.classList.add("cur-hidden"); });
-  }
 })();

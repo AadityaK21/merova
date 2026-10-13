@@ -19,7 +19,7 @@ The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, 
 | `404.html` | "Page not found" page (GitHub Pages uses it automatically) |
 | `assets/css/style.css` | All styles. Colours and fonts are at the top |
 | `assets/js/main.js` | Mobile menu, form sending (contact + waitlist), copy buttons, motion. **The Web3Forms key goes at the top of this file** |
-| `assets/fonts/` | Sora and IBM Plex Mono, self-hosted (no Google Fonts requests) |
+| `assets/fonts/` | Instrument Sans and IBM Plex Mono, self-hosted (no Google Fonts requests) |
 | `assets/brand/` | Logos and icons from the logo kit, plus `merova-brand-kit.zip` (downloaded from /brand) |
 | `assets/fit/` | Screens from the Merova Fit app used in the phone showcase |
 | `assets/og/` | Link preview images, one per page (what WhatsApp, LinkedIn and X show when someone shares a link) |
@@ -67,18 +67,21 @@ Also confirm `hello@`, `support@` (and `billing@` if you want it) are added as a
 
 The Web3Forms key is meant to be public, so it's fine in the code. Until the key is in, both forms tell visitors to email hello@merova.app instead.
 
+## Design system
+
+- **Colour:** black `#090909` first, ivory `#F1EFE9` second, gray `#8E8B85` (on black) and `#5A5751` (on ivory) for secondary text. Vermilion `#FF4B38` is a signal only: the "lined up" dot on the hero object and form errors. No other colours on the marketing pages (the app screenshots keep the app's own colours).
+- **Type:** Instrument Sans (headings and text, self-hosted variable font) and IBM Plex Mono for small labels only.
+- **Buttons:** primary is ivory on black (black on ivory sections) and inverts to an outline on hover; secondary is a thin outline. Arrows are added automatically: ↗ outside links, ↓ same page or download, → everything else.
+
 ## What moves on the site
 
-- **Cursor (desktop with a mouse only):** a small dot and a ring that trails it. Over buttons and cards the ring becomes a label (OPEN ↗, VIEW, EMAIL, NEXT SCREEN). Form fields keep the normal text cursor. Phones and tablets keep their normal behaviour. To change a label, add `data-cursor="YOUR LABEL"` to the element.
-- **Hero mark:** the two planes turn gently toward the pointer, the construction lines and fold point move with them, and as you scroll the drawing sheds its lines and becomes the plain logo. The header logo settles in when that happens.
-- **Buttons:** a fill slides in from the left and the arrow nudges (↗ outside links, ↓ same-page or download, → everything else). Arrows are added automatically.
-- **Links:** a line draws in underneath. Nav links, footer links and the logo (its planes shift) all react on hover.
-- **Scroll story:** headings rise out of a mask, rules draw across, section labels ([01] studio) draw their line, sections ease in. One oversized line drifts sideways on the home page.
-- **Merova Fit showcase:** real screens from the app (demo data) in a phone you can tilt, tap through, or switch with the TODAY / TRAIN / EAT tabs. It plays one short tour the first time it comes into view. Screens live in `assets/fit/`.
-- **Next app card:** a blueprint card whose mark traces itself; the whole card links to the launch list.
-- **Icons:** 12×12 pixel icons, drawn in the build script.
-- Pages crossfade between each other, FAQ answers slide open, policy pages show a reading progress bar, long pages get a back-to-top button.
-- Everything that moves is switched off for visitors who ask for reduced motion, and nothing runs in a loop while you're not interacting.
+- **Hero: the Fold.** The logo's two planes stand as real sheets in 3D. Drag them sideways (or swipe, or use the arrow keys after tabbing to them) to turn them. Press Home or "Line up" and they line up exactly into the Merova logo, and the dot turns vermilion. "Reset" puts them back. As you scroll away they turn to face you and the header logo settles in.
+- **The studio statement** lights up word by word as you read down.
+- **Merova Fit:** the phone stays on a dark stage while the three chapters (Today, Train, Eat) scroll past and change its screen. These are real screens from the app with demo data, in `assets/fit/`. On phones each chapter shows its own screen instead.
+- **Section headings** rise out of a mask as they come into view. Nothing else fades in.
+- A small chapter marker (02 The studio, 03 The collection...) sits at the bottom left on large screens.
+- Normal cursor everywhere. The only special cursor is the grab hand over the hero object.
+- With "reduce motion" on, nothing animates: the object rests, the statement shows in full, and every control still works.
 
 ## Security on the site
 

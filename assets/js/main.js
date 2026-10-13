@@ -36,7 +36,7 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       actx = new AC();
       var comp = actx.createDynamicsCompressor();
       comp.threshold.value = -18; comp.ratio.value = 4;
-      master = actx.createGain(); master.gain.value = 0.55;
+      master = actx.createGain(); master.gain.value = 0.8;
       master.connect(comp); comp.connect(actx.destination);
     }
     if (actx.state === "suspended") actx.resume();
@@ -75,11 +75,11 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     if (lastPlay[name] && now - lastPlay[name] < 45) return;
     lastPlay[name] = now;
     var t = actx.currentTime + 0.005;
-    if (name === "tick") { synth(SCALE[(arg || 0) % SCALE.length], t, 0.07, 0.05, "triangle"); }
-    else if (name === "hover") { air(t, 0.16, 0.035, 900, 2600); synth(330, t, 0.14, 0.018, "sine", 392); }
-    else if (name === "open") { air(t, 0.32, 0.03, 400, 1800); synth(523, t + 0.04, 0.22, 0.03, "sine", 659); }
-    else if (name === "close") { air(t, 0.26, 0.026, 1800, 500); synth(659, t, 0.18, 0.026, "sine", 494); }
-    else if (name === "align") { synth(1319, t, 0.5, 0.03, "sine"); synth(1976, t + 0.06, 0.45, 0.018, "sine"); }
+    if (name === "tick") { synth(SCALE[(arg || 0) % SCALE.length], t, 0.08, 0.075, "triangle"); }
+    else if (name === "hover") { air(t, 0.18, 0.05, 900, 2600); synth(330, t, 0.16, 0.03, "sine", 392); }
+    else if (name === "open") { air(t, 0.34, 0.045, 400, 1800); synth(523, t + 0.04, 0.24, 0.045, "sine", 659); }
+    else if (name === "close") { air(t, 0.28, 0.04, 1800, 500); synth(659, t, 0.2, 0.04, "sine", 494); }
+    else if (name === "align") { synth(1319, t, 0.55, 0.045, "sine"); synth(1976, t + 0.06, 0.5, 0.026, "sine"); }
     else if (name === "on") { synth(784, t, 0.09, 0.04, "triangle"); synth(1175, t + 0.08, 0.14, 0.035, "triangle"); }
   }
   function paintSound() {
@@ -223,7 +223,6 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     renderFold = function () {
       var ry = st.ry, rx = st.rx;
       var I = lightFor(ry);
-      fold.style.setProperty("--p", foldScroll.toFixed(3));
       obj.style.setProperty("--ry", ry.toFixed(2));
       obj.style.setProperty("--rx", rx.toFixed(2));
       obj.style.setProperty("--d", st.d.toFixed(1));
@@ -354,8 +353,12 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     var y = window.scrollY;
     if (header) header.classList.toggle("is-scrolled", y > 8);
     if (fold && hero && !reduceMotion) {
-      var p = clamp(y / (hero.offsetHeight * 0.7), 0, 1);
-      if (Math.abs(p - foldScroll) > 0.0005 || (p === 0 && foldScroll !== 0) || (p === 1 && foldScroll !== 1)) { foldScroll = p; fold.style.setProperty("--p", p.toFixed(3)); }
+      // progress through the hero: over the pinned stretch on desktop, over most of its height elsewhere
+      var pin = $(".hero__pin", hero);
+      var pinned = pin && getComputedStyle(pin).position === "sticky";
+      var range = pinned ? Math.max(1, hero.offsetHeight - pin.offsetHeight) : hero.offsetHeight * 0.7;
+      var p = clamp((y - (hero.offsetTop - (header ? header.offsetHeight : 0))) / range, 0, 1);
+      if (Math.abs(p - foldScroll) > 0.0005 || (p === 0 && foldScroll !== 0) || (p === 1 && foldScroll !== 1)) { foldScroll = p; hero.style.setProperty("--p", p.toFixed(3)); }
       if (headerBrand && p > 0.85 && !docked) {
         docked = true;
         headerBrand.classList.remove("is-docking");
@@ -367,6 +370,7 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
   window.addEventListener("scroll", function () {
     if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(onScroll); }
   }, { passive: true });
+  window.addEventListener("resize", onScroll);
   onScroll();
 
   /* ---------- The studio statement lights up word by word as you read down ---------- */
@@ -462,10 +466,35 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
      Decided from scroll position on every scroll frame, not from one-off events, so jumps (scrollbar drags,
      "Back to top", anchor links) can't leave anything stuck. Above the reveal line: shown. Pushed back
      below the bottom of the screen (scrolling up): reset, so it plays again on the way down. */
-  var revealEls = [], rq = false;
+  var revealEls = [], growEls = [], rq = false;
+  // wrap every word of a heading in a mask, keeping inner elements (like the italic word) intact
+  function splitWords(el) {
+    var n = 0;
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (c) {
+        if (c.nodeType === 3) {
+          var parts = c.textContent.split(/(\s+)/), frag = document.createDocumentFragment();
+          parts.forEach(function (w) {
+            if (!w) return;
+            if (/^\s+$/.test(w)) { frag.appendChild(document.createTextNode(" ")); return; }
+            var o = document.createElement("span"), i = document.createElement("span");
+            o.className = "mw"; i.className = "mw__i"; i.textContent = w;
+            i.style.setProperty("--i", String(n++));
+            o.appendChild(i); frag.appendChild(o);
+          });
+          node.replaceChild(frag, c);
+        } else if (c.nodeType === 1 && !c.classList.contains("count")) { walk(c); }
+      });
+    })(el);
+  }
   var paintReveals = function () {
     rq = false;
     var vh = window.innerHeight;
+    // light sections open from a card to full bleed while their top travels up the screen
+    for (var g = 0; g < growEls.length; g++) {
+      var gt = growEls[g].getBoundingClientRect().top;
+      growEls[g].style.setProperty("--e", clamp((vh - gt) / (vh * 0.55), 0, 1).toFixed(3));
+    }
     for (var i = 0; i < revealEls.length; i++) {
       var el = revealEls[i], top = el.getBoundingClientRect().top;
       if (top < vh * 0.9) { if (!el.classList.contains("is-in")) el.classList.add("is-in"); }
@@ -479,11 +508,44 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       if (el.getBoundingClientRect().top > vh0 * 0.9) { el.classList.add("rv-box"); revealEls.push(el); }
     });
     $$("main .h2, .pixels__title").forEach(function (h) {
-      if (h.getBoundingClientRect().top > vh0 * 0.9) { h.classList.add("rv"); revealEls.push(h); }
+      if (h.getBoundingClientRect().top > vh0 * 0.9) { splitWords(h); h.classList.add("rv-words"); revealEls.push(h); }
     });
+    $$(".grow").forEach(function (g) { growEls.push(g); });
     window.addEventListener("scroll", queueReveals, { passive: true });
     window.addEventListener("resize", queueReveals);
+    paintReveals();
     window.addEventListener("beforeprint", function () { revealEls.forEach(function (el) { el.classList.add("is-in"); }); });
+  }
+
+  /* ---------- Home work teaser ---------- */
+  var stage = $("[data-teaser-stage]");
+  if (stage) {
+    var slides = $$(".teaser__slide", stage), items = $$("[data-teaser]"), capT = $("[data-teaser-title]", stage), capK = $("[data-teaser-kind]", stage), activeT = 0;
+    var kinds = items.map(function (a) { return $(".tlist__k", a).textContent; });
+    var setActive = function (i) {
+      if (i === activeT) return;
+      activeT = i;
+      slides.forEach(function (sl, k) { sl.classList.toggle("is-on", k === i); });
+      items.forEach(function (a, k) { a.parentNode.classList.toggle("is-active", k === i); });
+      var sl = slides[i];
+      stage.setAttribute("href", sl.getAttribute("data-href"));
+      stage.setAttribute("aria-label", "Open " + sl.getAttribute("data-title"));
+      capT.textContent = sl.getAttribute("data-title"); capK.textContent = kinds[i];
+    };
+    items[0].parentNode.classList.add("is-active");
+    items.forEach(function (a, i) {
+      a.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") { setActive(i); sfx("tick", i + 1); } });
+      a.addEventListener("focus", function () { setActive(i); });
+    });
+    hoverSound(stage, "hover");
+    if (finePointer && !reduceMotion) {
+      stage.addEventListener("pointermove", function (e) {
+        var r = stage.getBoundingClientRect();
+        stage.style.setProperty("--tx", ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
+        stage.style.setProperty("--ty", ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
+      });
+      stage.addEventListener("pointerleave", function () { stage.style.setProperty("--tx", "0"); stage.style.setProperty("--ty", "0"); });
+    }
   }
 
   /* ---------- Work list: the thumbnail follows the pointer ---------- */
@@ -525,7 +587,7 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       if (!cueRaf) cueRaf = requestAnimationFrame(moveCue);
     };
     $$("[data-cursor]").forEach(function (el) {
-      el.addEventListener("pointerenter", function (e) {
+      var activate = function (e) {
         if (e.pointerType !== "mouse") return;
         cueOn = el;
         cueLabel.textContent = el.getAttribute("data-cursor");
@@ -534,8 +596,10 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
         cx = tx = clamp(e.clientX + 14, r.left + 8, r.right - 140); cy = ty = clamp(e.clientY + 14, r.top + 8, r.bottom - 40);
         track(e); moveCue();
         cue.classList.add("is-on");
-      });
-      el.addEventListener("pointermove", function (e) { if (cueOn === el) track(e); });
+      };
+      el.addEventListener("pointerenter", activate);
+      // after a scroll hides it, the first move inside brings it straight back
+      el.addEventListener("pointermove", function (e) { if (cueOn === el) track(e); else activate(e); });
       el.addEventListener("pointerleave", function () { if (cueOn === el) { cueOn = null; cue.classList.remove("is-on"); } });
     });
     window.addEventListener("scroll", function () { if (cueOn) { cueOn = null; cue.classList.remove("is-on"); } }, { passive: true });
@@ -550,9 +614,14 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
   if (band && !reduceMotion) {
     var bandBox = band.parentNode, bandX = null, bandTarget = 0, bandRaf = null, bandVisible = false;
     var bandSpan = function () { return band.scrollWidth / 2; };
+    var bandTop = 0;
+    var measureBand = function () { var t = 0, el = bandBox; while (el) { t += el.offsetTop; el = el.offsetParent; } bandTop = t; };
+    measureBand();
+    window.addEventListener("resize", function () { measureBand(); bandScroll(); });
+    window.addEventListener("load", measureBand);
     var bandGoal = function () {
-      var r = bandBox.getBoundingClientRect();
-      var travel = (window.innerHeight - r.top) * 0.6;      // 0 when the band first appears
+      measureBand();
+      var travel = (window.scrollY + window.innerHeight - bandTop) * 0.6;      // 0 when the band first appears
       var span = bandSpan() || 1;
       return -(((travel % span) + span) % span);
     };

@@ -29,8 +29,10 @@
 <meta name="twitter:description" content="The Fold: an interactive experiment that turns the Merova mark into two lit planes you can drag, swipe or turn with the keyboard.">
 <meta name="twitter:image" content="https://merova.app/assets/og/home.png">
 <link rel="preload" href="/assets/fonts/instrument-sans-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/style.css">
-<script src="/assets/js/main.js" defer></script>
+<link rel="preload" href="/assets/fonts/instrument-serif-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/instrument-serif-400-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/css/style.css?v=d45ff979f8">
+<script src="/assets/js/main.js?v=7b3ee4a07a" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -51,7 +53,7 @@
   <div class="menu__scrim" data-menu-close></div>
   <div class="menu__panel">
     <div class="menu__top">
-      <p class="menu__label">(Menu)</p>
+      <p class="menu__label">Menu</p>
       <button class="menu__close" type="button" data-menu-close>Close <span aria-hidden="true">×</span></button>
     </div>
     <nav aria-label="Main">
@@ -64,9 +66,9 @@
       </ol>
     </nav>
     <div class="menu__foot">
-      <div><p class="menu__label">(Product)</p><a href="/fit">Merova Fit</a><a href="https://fit.merova.app">Open the app <span aria-hidden="true">↗</span></a></div>
-      <div><p class="menu__label">(New project)</p><a href="mailto:hello@merova.app">hello@merova.app</a><a href="/services#enquire">Start a project <span aria-hidden="true">↗</span></a></div>
-      <div><p class="menu__label">(Sound)</p><button class="sound-toggle" type="button" aria-pressed="false" data-sound-toggle>
+      <div><p class="menu__label">Product</p><a href="/fit">Merova Fit</a><a href="https://fit.merova.app">Open the app <span aria-hidden="true">↗</span></a></div>
+      <div><p class="menu__label">New project</p><a href="mailto:hello@merova.app">hello@merova.app</a><a href="/services#enquire">Start a project <span aria-hidden="true">↗</span></a></div>
+      <div><p class="menu__label">Sound</p><button class="sound-toggle" type="button" aria-pressed="false" data-sound-toggle>
         <span class="sound-toggle__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span data-sound-label>Sound off</span>
       </button></div>
     </div>
@@ -75,12 +77,12 @@
 <main id="main" class="case case--fold">
   <header class="case__head">
     <div class="wrap">
-      <p class="kicker"><a class="link" href="/work">Work</a> <span aria-hidden="true">/</span> (04)</p>
+      <p class="kicker"><a class="link" href="/work">Work</a> <span aria-hidden="true">/</span> 04</p>
       <h1 class="case__title">The Fold</h1>
       <div class="case__meta">
-        <p><span>(Type)</span>Interactive experiment</p>
-        <p><span>(Status)</span>Experiment, live on the home page</p>
-        <p><span>(Origin)</span>Self-initiated</p>
+        <p><span>Type</span>Interactive experiment</p>
+        <p><span>Status</span>Experiment, live on the home page</p>
+        <p><span>Origin</span>Self-initiated</p>
         <div class="actions"><a class="btn btn--primary" href="/">Turn it on the home page<span class="btn__arrow" aria-hidden="true">→</span></a></div>
       </div>
     </div>
@@ -90,13 +92,13 @@
   </figure>
   <section class="case__about">
     <div class="wrap case__split">
-      <p class="case__label">(About it)</p>
+      <p class="case__label">About it</p>
       <div class="case__lede"><p>An experiment, not a client project. What if the logo was an object? The two planes of the Merova mark stand as sheets of paper under a light. Turn them and they catch the light differently. Look at them head on and they line up exactly into the logo.</p></div>
     </div>
   </section>
   <section class="case__facts-sec">
     <div class="wrap case__split">
-      <p class="case__label">(Details)</p>
+      <p class="case__label">Details</p>
       <dl class="case__facts">
           <div><dt>Type</dt><dd>Interactive experiment</dd></div>
           <div><dt>Built with</dt><dd>CSS 3D transforms and a little JavaScript. No WebGL, no libraries.</dd></div>
@@ -108,10 +110,30 @@
   </section>
   <section class="case__live">
     <div class="wrap case__split">
-      <p class="case__label">(Try it)</p>
+      <p class="case__label">Try it</p>
       <div class="case__live-stage"><div class="fold3d" data-fold>
           <div class="fold3d__scene" tabindex="0" role="slider" aria-label="Turn the Merova mark"
                aria-valuemin="-70" aria-valuemax="70" aria-valuenow="-18" aria-valuetext="Turned 18 degrees left" aria-describedby="fold-help" data-cursor="Drag to turn">
+            <svg class="fold3d__plan" viewBox="0 0 100 86" aria-hidden="true" focusable="false">
+              <g class="plan__lines">
+                <path pathLength="1" d="M4 69.68H96"/>
+                <path pathLength="1" class="plan__dash" d="M20 20.27H80V69.68H20Z"/>
+                <path pathLength="1" d="M14 14.27L69.41 69.68"/>
+                <path pathLength="1" d="M86 14.27L30.59 69.68"/>
+                <path pathLength="1" class="plan__dash" d="M50 9V76"/>
+                <path pathLength="1" d="M20 28.27A8 8 0 0 0 25.66 25.93"/>
+                <path pathLength="1" d="M20 11.5V13.5M80 11.5V13.5M20 12.5H80"/>
+                <path pathLength="1" d="M11 20.27H13M11 69.68H13M12 20.27V69.68"/>
+              </g>
+              <circle class="plan__node" cx="50" cy="50.27" r=".9"/>
+              <g class="plan__labels">
+                <text x="26.6" y="33">45°</text>
+                <text x="50" y="10.6" text-anchor="middle">68</text>
+                <text x="9.6" y="46" text-anchor="end">56</text>
+                <text x="82.5" y="19.6">B · 42%</text>
+                <text x="17.5" y="19.6" text-anchor="end">A</text>
+              </g>
+            </svg>
             <div class="fold3d__ground" aria-hidden="true"><i class="fold3d__pool"></i><i class="fold3d__shadow"></i><i class="fold3d__contact"></i></div>
             <div class="fold3d__obj">
               <div class="plane plane--r"><i class="plane__edge"></i><i class="plane__face"></i></div>
@@ -119,7 +141,7 @@
             </div>
           </div>
           <div class="fold3d__hud">
-            <p class="hud__fig"><span>Fig. 01</span> The Fold</p>
+            <p class="hud__fig">Fig. 01 <span>The Fold</span></p>
             <p class="hud__read" aria-hidden="true"><span class="hud__dot"></span><span class="hud__angle" data-angle>&minus;18°</span><span class="hud__state" data-state>Drag to turn</span></p>
             <div class="hud__keys"><button class="hud__btn" type="button" data-fold="align">Line up</button><button class="hud__btn" type="button" data-fold="reset">Reset</button></div>
           </div>
@@ -131,17 +153,17 @@
     <div class="wrap case__frames-grid">
         <figure class="case__frame">
           <img src="/assets/work/fold-a.webp" alt="The Fold turned to the left." width="1320" height="1036" loading="lazy" decoding="async">
-          <figcaption><span>(Frame 01)</span> Turned left: the solid plane catches the light.</figcaption>
+          <figcaption><span>Frame 01</span> Turned left: the solid plane catches the light.</figcaption>
         </figure>
         <figure class="case__frame">
           <img src="/assets/work/fold-b.webp" alt="The Fold turned further, the sheets nearly edge on." width="1320" height="1036" loading="lazy" decoding="async">
-          <figcaption><span>(Frame 02)</span> Nearly edge on: the paper's thickness shows.</figcaption>
+          <figcaption><span>Frame 02</span> Nearly edge on: the paper's thickness shows.</figcaption>
         </figure>
     </div>
   </section>
   <section class="case__notes">
     <div class="wrap case__split">
-      <p class="case__label">(What I did)</p>
+      <p class="case__label">What I did</p>
       <ul class="case__list">
           <li>Each plane sits at its own depth, scaled to cancel perspective, so the head-on view is the exact logo.</li>
           <li>Light is worked out from the angle, so the paper brightens and darkens as it turns.</li>
@@ -152,7 +174,7 @@
   </section>
   <a class="case__next" href="/fit">
     <span class="wrap case__next-in">
-      <span class="case__label">(Next project)</span>
+      <span class="case__label">Next project</span>
       <span class="case__next-title">Merova Fit<span aria-hidden="true">→</span></span>
       <span class="case__next-kind">Product</span>
       <span class="case__next-bar" aria-hidden="true"></span>

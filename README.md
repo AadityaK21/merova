@@ -21,6 +21,7 @@ The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, 
 | `assets/js/main.js` | Mobile menu, form sending (contact + waitlist), copy buttons, motion. **The Web3Forms key goes at the top of this file** |
 | `assets/fonts/` | Sora and IBM Plex Mono, self-hosted (no Google Fonts requests) |
 | `assets/brand/` | Logos and icons from the logo kit, plus `merova-brand-kit.zip` (downloaded from /brand) |
+| `assets/fit/` | Screens from the Merova Fit app used in the phone showcase |
 | `assets/og/` | Link preview images, one per page (what WhatsApp, LinkedIn and X show when someone shares a link) |
 | `.well-known/security.txt` | Tells security researchers where to report a problem (support@merova.app). Renew the `Expires` date every year |
 | `CNAME` | Tells GitHub Pages the site lives at merova.app |
@@ -68,16 +69,16 @@ The Web3Forms key is meant to be public, so it's fine in the code. Until the key
 
 ## What moves on the site
 
-- The Fold mark in the hero draws itself on load, leans toward the pointer and opens up as you scroll.
-- The Merova Fit phone drawing plays once (day score fills, workouts tick, water fills) when it scrolls into view.
-- Pages crossfade when you click between them (Chrome, Edge and Safari; other browsers just load normally).
-- FAQ answers slide open.
-- Sections ease in as you scroll to them.
-- The Merova Fit card has a soft sage light that follows the pointer, and the "Next app" mark slowly traces itself.
-- On the Merova Fit page the phone drawing plays and then floats.
-- Policy pages show a thin reading progress bar under the header (Chrome and Edge).
-- A back-to-top button appears on long pages.
-- Everything is switched off for visitors who ask their device for reduced motion.
+- **Cursor (desktop with a mouse only):** a small dot and a ring that trails it. Over buttons and cards the ring becomes a label (OPEN ↗, VIEW, EMAIL, NEXT SCREEN). Form fields keep the normal text cursor. Phones and tablets keep their normal behaviour. To change a label, add `data-cursor="YOUR LABEL"` to the element.
+- **Hero mark:** the two planes turn gently toward the pointer, the construction lines and fold point move with them, and as you scroll the drawing sheds its lines and becomes the plain logo. The header logo settles in when that happens.
+- **Buttons:** a fill slides in from the left and the arrow nudges (↗ outside links, ↓ same-page or download, → everything else). Arrows are added automatically.
+- **Links:** a line draws in underneath. Nav links, footer links and the logo (its planes shift) all react on hover.
+- **Scroll story:** headings rise out of a mask, rules draw across, section labels ([01] studio) draw their line, sections ease in. One oversized line drifts sideways on the home page.
+- **Merova Fit showcase:** real screens from the app (demo data) in a phone you can tilt, tap through, or switch with the TODAY / TRAIN / EAT tabs. It plays one short tour the first time it comes into view. Screens live in `assets/fit/`.
+- **Next app card:** a blueprint card whose mark traces itself; the whole card links to the launch list.
+- **Icons:** 12×12 pixel icons, drawn in the build script.
+- Pages crossfade between each other, FAQ answers slide open, policy pages show a reading progress bar, long pages get a back-to-top button.
+- Everything that moves is switched off for visitors who ask for reduced motion, and nothing runs in a loop while you're not interacting.
 
 ## Security on the site
 

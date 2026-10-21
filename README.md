@@ -1,197 +1,92 @@
 # merova.app
 
-The website for Merova. Plain HTML, CSS and a little JavaScript. No build step, no frameworks.
+Merova is an independent digital studio in India. The site introduces its website, interactive-site and web-app services, shows self-initiated work, and accepts project enquiries. Merova Fit is one of the studio's own products.
 
-## What's in this folder
+The production site is plain HTML, CSS and JavaScript. A Python script generates the pages; there is no front-end framework or bundler.
 
-| File | What it is |
+## Edit the source
+
+| Path | Purpose |
 | --- | --- |
-| `index.html` | Home: hero, what Merova is, the apps (Merova Fit + next app), launch waitlist, FAQ |
-| `fit.html` | Merova Fit page: features, how it works, coaches, plans, your data |
-| `about.html` | The solo-founder story |
-| `brand.html` | Brand kit: logo downloads, colours, type, logo rules |
-| `contact.html` | Emails, business details and the contact form |
-| `privacy.html` | Privacy policy (Razorpay + Play Store) |
-| `terms.html` | Terms of service |
-| `refund.html` | Refund and cancellation policy (7-day window) |
-| `shipping.html` | Shipping and delivery policy |
-| `delete-account.html` | Account deletion page (Play Store asks for this URL) |
-| `404.html` | "Page not found" page (GitHub Pages uses it automatically) |
-| `assets/css/style.css` | All styles. Colours and fonts are at the top |
-| `assets/js/main.js` | Mobile menu, form sending (contact + waitlist), copy buttons, motion. **The Web3Forms key goes at the top of this file** |
-| `assets/fonts/` | Instrument Sans and IBM Plex Mono, self-hosted (no Google Fonts requests) |
-| `assets/brand/` | Logos and icons from the logo kit, plus `merova-brand-kit.zip` (downloaded from /brand) |
-| `assets/fit/` | Screens from the Merova Fit app used in the phone showcase |
-| `assets/og/` | Link preview images, one per page (what WhatsApp, LinkedIn and X show when someone shares a link) |
-| `.well-known/security.txt` | Tells security researchers where to report a problem (support@merova.app). Renew the `Expires` date every year |
-| `CNAME` | Tells GitHub Pages the site lives at merova.app |
-| `.nojekyll` | Tells GitHub Pages to serve files as they are |
-| `site.webmanifest`, `robots.txt`, `sitemap.xml`, favicons | SEO and icons |
+| `tools/build.py` | Page content, shared header and footer, portfolio data, forms, sitemap, security.txt and brand-kit archive |
+| `assets/css/style.css` | Design tokens, layout, responsive styling and motion |
+| `assets/js/main.js` | Fold controls, menu, reversible scroll effects, sound, project finder and form behaviour |
+| `assets/fonts/` | Self-hosted Instrument Sans, Instrument Serif and IBM Plex Mono |
+| `assets/work/`, `assets/fit/` | Portfolio and product images |
+| `assets/og/` | Social link-preview images |
+| `vercel.json` | Clean URLs, security headers and caching |
+| `tools/tests/` | Browser regression and accessibility checks |
+| `briefs/`, `AGENTS.md` | Project context and handoff notes, excluded from deployment |
 
-## Preview on your computer
+Do not hand-edit root HTML files or `work/*.html`. Change `tools/build.py`, then regenerate them from the site root:
 
-Links use clean addresses (merova.app/about, not about.html), so preview with a server that understands them. Open the folder in a terminal and run:
-
-```
-npx serve .
+```powershell
+python tools/build.py
 ```
 
-Then open the address it prints (usually http://localhost:3000). Don't double-click the files: links like /about only work through a server, just like on the live site.
+Run the build after every CSS or JavaScript edit too. The generator puts content hashes into asset URLs; the production cache keeps CSS and JavaScript for a year, so the new hashes are necessary for visitors to receive changes.
 
-## Fill these in before launch
+## Preview locally
 
-Every blank on the site looks like `[THIS]` with a dashed box around it. Search the folder for `[` to find them all.
+Install the development tools once, then start the preview server:
 
-| Placeholder | Where | Why it matters |
-| --- | --- | --- |
-| `[BUSINESS ADDRESS]` | contact, privacy, terms, refund, shipping | **Razorpay checks for an address** |
-| `[PHONE, optional]` | contact | Razorpay likes a phone number; delete the row if you don't want one public |
-| `[CITY]` | terms | City whose courts handle disputes (e.g. New Delhi) |
-| `[PRICING TBD]` | index, fit, terms | Razorpay wants prices visible somewhere (the app is fine too) |
-| `[WHAT'S IN FREE]` | fit | What the free version of Merova Fit includes |
-| `[IN-APP PATH ...]` | refund, delete-account | Where Cancel plan / Delete account sits in the app |
-| `[CHECK THIS LIST MATCHES THE QUIZ]` | privacy | Make the list match the real onboarding questions |
-| `[24 hours]`, `[7]`, returns rule | refund | Call cancellation window and shop return rules |
-| Shipping table, `[CALL METHOD ...]` | shipping | If you only sell digital things, delete section 03 (there's a note in the file) |
-| `[90]`, `[30]` | privacy, delete-account | How long logs and backups are kept |
-| Web3Forms key | assets/js/main.js | Done. One key powers both the contact form and the waitlist |
-
-Also confirm `hello@`, `support@` (and `billing@` if you want it) are added as aliases in admin.google.com before going live.
-
-## Turn on the contact form and waitlist (Web3Forms, free)
-
-1. Go to https://web3forms.com and enter `hello@merova.app`.
-2. They email you an access key.
-3. At the top of `assets/js/main.js`, replace `YOUR_WEB3FORMS_ACCESS_KEY` with that key.
-4. Send yourself a test message and a test waitlist sign-up from the live site. Waitlist sign-ups arrive as emails titled "Waitlist sign-up from merova.app".
-
-The Web3Forms key is meant to be public, so it's fine in the code. Until the key is in, both forms tell visitors to email hello@merova.app instead.
-
-## Design system
-
-- **Colour:** black `#090909` first, ivory `#F1EFE9` second, gray `#8E8B85` (on black) and `#5A5751` (on ivory) for secondary text. Vermilion `#FF4B38` is a signal only: the "lined up" dot on the hero object and form errors. No other colours on the marketing pages (the app screenshots keep the app's own colours).
-- **Type:** Instrument Sans (headings and text, self-hosted variable font) and IBM Plex Mono for small labels only.
-- **Buttons:** primary is ivory on black (black on ivory sections) and inverts to an outline on hover; secondary is a thin outline. Arrows are added automatically: ↗ outside links, ↓ same page or download, → everything else.
-
-## What moves on the site
-
-- **Hero: the Fold.** The logo's two planes stand as real sheets in 3D. Drag them sideways (or swipe, or use the arrow keys after tabbing to them) to turn them. Press Home or "Line up" and they line up exactly into the Merova logo, and the dot turns vermilion. "Reset" puts them back. As you scroll away they turn to face you and the header logo settles in.
-- **The studio statement** lights up word by word as you read down.
-- **Merova Fit:** the phone stays on a dark stage while the three chapters (Today, Train, Eat) scroll past and change its screen. These are real screens from the app with demo data, in `assets/fit/`. On phones each chapter shows its own screen instead.
-- **Section headings** rise out of a mask as they come into view. Nothing else fades in.
-- A small chapter marker (02 The studio, 03 The collection...) sits at the bottom left on large screens.
-- Normal cursor everywhere. The only special cursor is the grab hand over the hero object.
-- With "reduce motion" on, nothing animates: the object rests, the statement shows in full, and every control still works.
-
-## Security on the site
-
-- Every page has a Content Security Policy: only files from merova.app run, and forms can only send to Web3Forms.
-- No trackers, no third-party scripts or fonts, nothing loaded from other sites.
-- No secrets anywhere in the code. The only key (Web3Forms) is public by design.
-
-## Editing the header or footer
-
-The header and footer are copied into every page (that's the price of having no build step). To change one, use VS Code: **Edit > Replace in Files** across the folder.
-
----
-
-## Put it online with GitHub Pages (free)
-
-### Step 1: Connect your folder to GitHub
-
-The site is already pushed to the `main` branch of github.com/AadityaK21/merova. To link `C:\merova` to it (one time), run this from `C:\merova`:
-
-```
-git init
-git remote add origin https://github.com/AadityaK21/merova.git
-git fetch origin
-git checkout -f -B main --track origin/main
+```powershell
+cd tools
+npm install
+npm run serve
 ```
 
-After that, every change you make goes live with:
+Open `http://localhost:8765`. Keep this terminal running while testing. The local server supports clean page URLs such as `/services` and applies the security headers from `vercel.json`. Do not preview by double-clicking an HTML file.
 
+The project finder is at `/#services`. It recommends a service from the visitor's choice and carries a draft brief into `/services#enquire`. The visitor can edit the brief before submitting. Use the direct enquiry link when guidance is not needed.
+
+## Check changes
+
+With the preview server running, use another terminal:
+
+```powershell
+cd tools
+npx playwright install chromium
+npm test
+npm run test:finder
+npm run axe
 ```
-git add .
-git commit -m "Describe the change"
-git push
+
+If using an existing Chrome installation, set `CHROME_PATH` before the checks. Set `BASE_URL` to test a different preview address.
+
+```powershell
+$env:CHROME_PATH = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+$env:BASE_URL = 'http://localhost:8765'
 ```
 
-### Step 2: Turn on Pages
+Check desktop at 1440 by 1000, tablet at 1024 by 768 and mobile at 390 by 844. Verify two complete down-and-up scroll cycles, Fold controls after scrolling, menu focus and closing, reduced motion, sound on and off, form validation, project-finder handoff, and horizontal overflow. Check the browser console and CSP errors. Report actual results and any checks that could not run; historical handoff results are not evidence for a new change.
 
-1. Open github.com/AadityaK21/merova > **Settings** > **Pages**.
-2. Source: **Deploy from a branch**. Branch: **main**, folder **/ (root)**. Save.
-3. Custom domain: type `merova.app` and Save. (The `CNAME` file already says this.)
+## Design and content
 
-A private repo works for Pages because your student pack gives you GitHub Pro.
+- Near-black `#090909`, warm ivory `#F1EFE9` and neutral secondary text. Product screenshots retain their own colours.
+- Instrument Sans for text and interface labels; Instrument Serif for selected display moments; IBM Plex Mono for technical readouts.
+- The two-plane Fold is the signature interaction. Scroll progress changes its unfolding, while the user's controls own its angle.
+- Scroll effects must reproduce the same state at the same scroll position in either direction. Respect reduced motion.
+- Sound is off by default and starts only after a visitor chooses to enable it.
+- Keep all portfolio items labelled `Self-initiated` until real client work is approved for publication. Do not invent clients, testimonials, prices, outcomes or product capabilities.
+- Keep the owner's personal name off marketing pages and use plain English without em dashes.
 
-### Step 3 (recommended): Verify the domain
+## Forms and configuration
 
-This stops anyone else from ever pointing merova.app at their own GitHub site.
+Project enquiries, contact messages and update sign-ups use Web3Forms. Its access key in `assets/js/main.js` is public by design. Never add payment secrets, email-service secrets or database credentials to browser code.
 
-1. Your GitHub profile > **Settings** > **Pages** > **Add a domain** > `merova.app`.
-2. GitHub shows a TXT record named like `_github-pages-challenge-AadityaK21`. Add it at Name.com (see the table below), then click **Verify**.
+The main project address is `hello@merova.app`. Project scope, timeline and price are agreed after a conversation.
 
-This is a **new** TXT record with its own name. It doesn't touch your email TXT records.
+`RAZORPAY_PAYMENT_URL` in `tools/build.py` is intentionally empty until the owner supplies a real payment link. A configured link belongs only in the separate agreed-quote section on the services page.
 
-### Step 4: DNS records at Name.com
+Business address, court city, pricing and legal-policy placeholders need confirmed facts from the owner. Keep visible placeholders until those facts are supplied; do not treat the current policy text as a completed legal review.
 
-Name.com > My Domains > merova.app > **Manage DNS Records**.
+## Hosting and publication
 
-**Before adding anything, look at what's already there.** Name.com sometimes adds default "parking" records on `@`, `www` or `*` (A, ALIAS, CNAME or URL forwarding). Those clash with GitHub Pages and are the only records that should be removed. If you're unsure which ones they are, send a screenshot first.
+The handoff identifies Vercel as the production host and `main` in [AadityaK21/merova](https://github.com/AadityaK21/merova) as the deployment branch. A push to `main` can publish the site. Commit and push only with the owner's approval. Changes to DNS, email, payments or the hosting plan also need prior approval.
 
-**Add these.** In Name.com, leave **Host** empty for the root domain (`@`). TTL 300 is fine.
+This local folder was supplied as copied files and had no `.git` directory when reviewed on 22 October 2026. GitHub access was verified against `main` at `e7fa568`. The folder still needs to be connected to Git before pulling or pushing. Preserve local edits and compare them with the authenticated reference clone before syncing. Do not use a forced checkout or reset to connect the folder.
 
-| Type | Host | Answer / value |
-| --- | --- | --- |
-| A | *(empty)* | `185.199.108.153` |
-| A | *(empty)* | `185.199.109.153` |
-| A | *(empty)* | `185.199.110.153` |
-| A | *(empty)* | `185.199.111.153` |
-| AAAA | *(empty)* | `2606:50c0:8000::153` |
-| AAAA | *(empty)* | `2606:50c0:8001::153` |
-| AAAA | *(empty)* | `2606:50c0:8002::153` |
-| AAAA | *(empty)* | `2606:50c0:8003::153` |
-| CNAME | `www` | `aadityak21.github.io` |
-| TXT | `_github-pages-challenge-AadityaK21` | *(the code GitHub shows you in Step 3)* |
+`.vercelignore` excludes `AGENTS.md`, `README.md`, `tools/` and `briefs/` from deployment. Keep these exclusions. The `CNAME` and `.nojekyll` files are retained from the older GitHub Pages setup; they are not instructions to change DNS or turn Pages back on.
 
-**Never touch these (your Google Workspace email):**
-
-| Type | Host | Value |
-| --- | --- | --- |
-| MX | *(empty)* | The five Google records: `aspmx.l.google.com` and `alt1` to `alt4.aspmx.l.google.com` |
-| TXT | *(empty)* | `v=spf1 include:_spf.google.com ~all` |
-| TXT | `google._domainkey` | Google DKIM key |
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:aaditya@merova.app` |
-
-A and MX records for the same host live side by side without any problem, so the website and email won't affect each other.
-
-**Later, for Merova Fit:** a `CNAME` for `fit` pointing at wherever the Merova Fit front end is hosted. Don't add it until that's decided.
-
-Don't add a wildcard (`*`) record. GitHub warns it makes domain takeover possible.
-
-### Step 5: HTTPS
-
-`.app` domains only work over HTTPS (browsers force it). After DNS is in place, GitHub creates a certificate for you, which can take from a few minutes to about an hour. Until then the site may show a security error. That's expected.
-
-Once it's ready, go back to **Settings > Pages** and tick **Enforce HTTPS**.
-
-### Step 6: Check it works
-
-- https://merova.app and https://www.merova.app both open the site
-- https://merova.app/privacy opens the privacy policy (no `.html` needed)
-- Send an email to hello@merova.app from another account. It should still arrive.
-- Add merova.app to Google Search Console and submit `https://merova.app/sitemap.xml`
-
----
-
-## Links you'll need elsewhere
-
-| For | URL |
-| --- | --- |
-| Razorpay website review | https://merova.app (About, Contact, Privacy, Terms, Refund, Shipping are all linked in the footer) |
-| Play Console: privacy policy | https://merova.app/privacy |
-| Play Console: account deletion | https://merova.app/delete-account |
-
-## App emails (later)
-
-OTP codes and receipts should go through Resend from a subdomain like `send.merova.app`, not Gmail. Resend will give you its own records (on the `send` subdomain and a `resend._domainkey` key). They don't clash with the Google records, but check with me before adding them.
+The CSP allows local scripts, styles, fonts and images, with form requests to Web3Forms. Keep runtime JavaScript and CSS in external local files. Any new external service needs an explicit configuration and approval review before deployment.

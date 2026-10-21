@@ -1,0 +1,13 @@
+tools/node_modules/
+tools/tests/shots/
+tools/test-results/
+tools/playwright-report/
+__pycache__/
+*.py[cod]
+npm-debug.log*
+.vercel/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

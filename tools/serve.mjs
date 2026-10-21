@@ -1,0 +1,32 @@
+import http from 'node:http';
+import path from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+
+const root = path.resolve(process.env.SITE_ROOT || fileURLToPath(new URL('../', import.meta.url)));
+const port = Number(process.env.PORT || 8765);
+const config = JSON.parse(await readFile(path.join(root, 'vercel.json'), 'utf8'));
+const security = Object.fromEntries(config.headers.find(rule => rule.source === '/(.*)').headers.map(header => [header.key, header.value]));
+const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.xml': 'application/xml', '.txt': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.zip': 'application/zip' };
+const server = http.createServer(async (req, res) => {
+  try {
+    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/\\/g, '/');
+    const relative = pathname.replace(/^\/+/, '') || 'index.html';
+    let file = path.resolve(root, relative);
+    const segments = relative.split('/');
+    const privatePath = segments.some((segment, index) => segment.startsWith('.') && !(index === 0 && segment === '.well-known'));
+    if (!file.startsWith(root + path.sep) || privatePath || /^(?:tools|briefs)(?:\/|$)|^(?:AGENTS\.md|README\.md)$/i.test(relative)) {
+      res.writeHead(404, { ...security, 'Content-Type': 'text/plain' }).end('Not found');
+      return;
+    }
+    if (!path.extname(file)) file += '.html';
+    let code = 200;
+    try { if (!(await stat(file)).isFile()) throw new Error('Not a file'); }
+    catch { file = path.join(root, '404.html'); code = 404; }
+    res.writeHead(code, { ...security, 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+    res.end(await readFile(file));
+  } catch {
+    res.writeHead(400).end('Bad request');
+  }
+});
+server.listen(port, '127.0.0.1', () => console.log(`Local: http://localhost:${port}`));

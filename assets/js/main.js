@@ -529,7 +529,6 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       items.forEach(function (a, k) { a.parentNode.classList.toggle("is-active", k === i); });
       var sl = slides[i];
       stage.setAttribute("href", sl.getAttribute("data-href"));
-      stage.setAttribute("aria-label", "Open " + sl.getAttribute("data-title"));
       capT.textContent = sl.getAttribute("data-title"); capK.textContent = kinds[i];
     };
     items[0].parentNode.classList.add("is-active");
@@ -694,6 +693,131 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     if (v && $$("option", sel).some(function (o) { return o.value === v; })) sel.value = v;
   });
 
+  /* ---------- Project finder: a useful starting point, then a real enquiry ----------
+     Only the service choice goes in the URL. The visitor's optional note stays
+     in sessionStorage in this tab, and is sent only by the enquiry form. */
+  var BRIEF_KEY = "merova-project-brief-v1";
+  var PROJECTS = {
+    website: {
+      goal: "A home for my business",
+      title: "Website design and development",
+      description: "A clear home for your business, designed around what visitors need to understand and do.",
+      includes: ["Layout, type and art direction", "Responsive build and enquiry forms", "Search basics and fast loading"],
+      image: "/assets/work/site-home.webp", alt: "The Merova website homepage with its interactive Fold",
+      href: "/work/merova-site", project: "merova.app", kind: "Website and identity"
+    },
+    motion: {
+      goal: "A site people remember",
+      title: "Interactive and motion-led websites",
+      description: "An expressive website with a clear story, thoughtful motion and moments visitors can explore.",
+      includes: ["Art direction and a story to explore", "Purposeful scroll and pointer interactions", "Keyboard access and reduced-motion support"],
+      image: "/assets/work/fold-a.webp", alt: "The Fold, Merova's interactive two-plane brand experiment",
+      href: "/work/the-fold", project: "The Fold", kind: "Interactive experiment"
+    },
+    app: {
+      goal: "An idea people can use",
+      title: "Web applications and digital products",
+      description: "Turn a useful idea into a working product, starting with the core task your customers need to complete.",
+      includes: ["User journeys and interface design", "Accounts, dashboards, data and APIs", "A focused first version, scoped together"],
+      image: "/assets/work/ch-home.webp", alt: "Company Hub, a self-initiated Merova web application",
+      href: "/work/company-hub", project: "Company Hub", kind: "Web application"
+    },
+    improve: {
+      goal: "A better version of my site",
+      title: "Product design and ongoing improvements",
+      description: "Start with what already exists. Find the confusing, slow or unfinished parts and agree what to improve first.",
+      includes: ["A review of the existing experience", "Design, speed and accessibility improvements", "A prioritised scope before work starts"],
+      image: "/assets/work/site-brand.webp", alt: "The Merova website's brand identity and design system",
+      href: "/work/merova-site", project: "merova.app", kind: "Website and identity"
+    }
+  };
+  var TIMELINES = ["Not sure yet", "As soon as possible", "Within a month", "One to three months", "Flexible"];
+  function readProjectBrief() {
+    try {
+      var brief = JSON.parse(sessionStorage.getItem(BRIEF_KEY));
+      if (!brief || brief.version !== 1 || !Object.prototype.hasOwnProperty.call(PROJECTS, brief.type) ||
+          TIMELINES.indexOf(brief.timeline) < 0 || typeof brief.note !== "string" || brief.note.length > 1200) return null;
+      return brief;
+    } catch (err) { return null; }
+  }
+  function forgetProjectBrief() {
+    try { sessionStorage.removeItem(BRIEF_KEY); } catch (err) { /* storage can be disabled */ }
+  }
+  var finder = $("[data-project-finder]");
+  if (finder) {
+    var choices = $$("[data-project-choice]", finder);
+    var finderTime = $("[data-finder-timeline]", finder);
+    var finderNote = $("[data-finder-note]", finder);
+    var finderContinue = $("[data-finder-continue]", finder);
+    var finderStatus = $("[data-finder-status]", finder);
+    var savedBrief = readProjectBrief();
+    if (savedBrief) {
+      choices.forEach(function (choice) { choice.checked = choice.value === savedBrief.type; });
+      finderTime.value = savedBrief.timeline;
+      finderNote.value = savedBrief.note;
+    }
+    function chosenProject() {
+      var checked = choices.filter(function (choice) { return choice.checked; })[0];
+      return checked && Object.prototype.hasOwnProperty.call(PROJECTS, checked.value) ? checked.value : "website";
+    }
+    function paintProject(announce) {
+      var key = chosenProject(), project = PROJECTS[key];
+      $("[data-finder-title]", finder).textContent = project.title;
+      $("[data-finder-description]", finder).textContent = project.description;
+      var includes = $("[data-finder-includes]", finder);
+      includes.textContent = "";
+      project.includes.forEach(function (text) {
+        var li = document.createElement("li"); li.textContent = text; includes.appendChild(li);
+      });
+      var image = $("[data-finder-image]", finder);
+      image.src = project.image; image.alt = project.alt;
+      var work = $("[data-finder-work]", finder);
+      work.href = project.href;
+      $("[data-finder-project]", finder).textContent = project.project;
+      $("[data-finder-kind]", finder).textContent = project.kind;
+      finderContinue.href = "/services?type=" + key + "&from=finder#enquire";
+      if (finderStatus) finderStatus.textContent = (announce ? "Starting point updated: " : "Starting point: ") + project.title + ".";
+    }
+    choices.forEach(function (choice) { choice.addEventListener("change", function () { paintProject(true); }); });
+    finderContinue.addEventListener("click", function (event) {
+      try {
+        sessionStorage.setItem(BRIEF_KEY, JSON.stringify({ version: 1, type: chosenProject(),
+          timeline: finderTime.value, note: finderNote.value.trim().slice(0, 1200) }));
+      } catch (err) {
+        // Never hand off a stale saved draft after a failed write.
+        event.preventDefault();
+        if (finderStatus) finderStatus.textContent = "This browser could not carry your brief. Copy your note and timeline, then use the direct enquiry link below.";
+      }
+    });
+    window.addEventListener("pageshow", function () { paintProject(false); });
+    paintProject(false);
+  }
+  var enquiry = $("#enquiry-form");
+  if (enquiry) {
+    var finderParams = new URLSearchParams(window.location.search);
+    var projectBrief = finderParams.get("from") === "finder" ? readProjectBrief() : null;
+    if (projectBrief && projectBrief.type === finderParams.get("type")) {
+      var projectGoal = PROJECTS[projectBrief.type].goal;
+      var enquiryType = $("#q-type", enquiry);
+      enquiryType.value = projectBrief.type;
+      $("#q-time", enquiry).value = projectBrief.timeline;
+      var idea = $("#q-idea", enquiry);
+      if (!idea.value && projectBrief.note) idea.value = projectBrief.note;
+      var goalInput = $("[data-enquiry-goal]", enquiry);
+      goalInput.value = projectGoal; goalInput.disabled = false;
+      var enquirySummary = $("[data-enquiry-summary]", enquiry);
+      function paintEnquiryBrief() {
+        var key = enquiryType.value;
+        var project = Object.prototype.hasOwnProperty.call(PROJECTS, key) ? PROJECTS[key] : null;
+        goalInput.value = project ? project.goal : "Not sure yet";
+        enquirySummary.textContent = project ? project.goal + ". " + project.title + "." : "Still deciding. We'll find the right starting point together.";
+      }
+      enquiryType.addEventListener("change", paintEnquiryBrief);
+      paintEnquiryBrief();
+      $("[data-enquiry-brief]", enquiry).hidden = false;
+    }
+  }
+
   $$("form[data-form]").forEach(function (form) {
     var kind = form.getAttribute("data-form");
     var msg = MESSAGES[kind] || MESSAGES.contact;
@@ -740,7 +864,16 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       fetch(form.action, { method: "POST", headers: { Accept: "application/json" }, body: data })
         .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
         .then(function (r) {
-          if (r.ok && r.body && r.body.success) { form.reset(); show("ok", msg.ok); } else { show("error", msg.fail); }
+          if (r.ok && r.body && r.body.success) {
+            form.reset();
+            if (kind === "enquiry") {
+              forgetProjectBrief();
+              var briefNotice = $("[data-enquiry-brief]", form), briefGoal = $("[data-enquiry-goal]", form);
+              if (briefNotice) briefNotice.hidden = true;
+              if (briefGoal) { briefGoal.value = ""; briefGoal.disabled = true; }
+            }
+            show("ok", msg.ok);
+          } else { show("error", msg.fail); }
         })
         .catch(function () { show("error", msg.fail); })
         .then(function () { button.disabled = false; button.innerHTML = original; });

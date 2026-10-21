@@ -2059,9 +2059,10 @@ page("brand.html", title="Brand kit - Merova",
 # ---------------------------------------------------------------- sitemap + security.txt
 SITEMAP_PAGES = ["", "work", "services", "work/company-hub", "work/merova-site", "work/the-fold", "fit", "about", "contact", "brand", "privacy", "terms", "refund", "shipping", "delete-account"]
 TODAY = "2026-10-13"
+PAGE_UPDATED = {"": "2026-10-22", "services": "2026-10-22"}
 (OUT / "sitemap.xml").write_text(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    + "".join(f"  <url><loc>{SITE}/{p}</loc><lastmod>{TODAY}</lastmod></url>\n" for p in SITEMAP_PAGES)
+    + "".join(f"  <url><loc>{SITE}/{p}</loc><lastmod>{PAGE_UPDATED.get(p, TODAY)}</lastmod></url>\n" for p in SITEMAP_PAGES)
     + "</urlset>\n", encoding="utf-8")
 (OUT / ".well-known").mkdir(exist_ok=True)
 (OUT / ".well-known" / "security.txt").write_text(

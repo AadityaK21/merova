@@ -320,8 +320,14 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   const pg = await ctx.newPage();
   await pg.goto(B + '/', { waitUntil: 'networkidle' });
   ok(await pg.$eval('.fold3d__scene', e => e.getAttribute('aria-valuenow')) === '-18', 'reduced motion: no intro spin');
-  for (let y = 0; y < 9000; y += 600) { await pg.evaluate(y => scrollTo({ top: y, behavior: 'instant' }), y); await wait(60); }
-  ok(await pg.$eval('.talk__track', e => e.style.getPropertyValue('--bx')) === '', 'reduced motion: the band stays still');
+  const readBand = () => pg.$eval('.talk__track', e => {
+    const transform = getComputedStyle(e).transform;
+    const matrix = new DOMMatrixReadOnly(transform === 'none' ? undefined : transform);
+    return { transform, x: matrix.m41, y: matrix.m42 };
+  });
+  const bandStates = [await readBand()];
+  for (let y = 0; y < 9000; y += 600) { await pg.evaluate(y => scrollTo({ top: y, behavior: 'instant' }), y); await wait(60); bandStates.push(await readBand()); }
+  ok(bandStates.every(s => s.transform === bandStates[0].transform && Math.abs(s.x) < 0.01 && Math.abs(s.y) < 0.01), 'reduced motion: the band stays at zero translation throughout scrolling');
   ok(await pg.evaluate(() => !(parseFloat(getComputedStyle(document.querySelector('[data-fold]')).getPropertyValue('--p')) > 0)), 'reduced motion: the hero object does not move with scroll');
   const hidden = await pg.$$eval('main h1, main h2, main h3, main p:not(.chapter), main a, main button, main li', els => els.filter(e => parseFloat(getComputedStyle(e).opacity) < 0.5 && e.getBoundingClientRect().height > 0).length);
   ok(hidden === 0, 'reduced motion: nothing hidden');

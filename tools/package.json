@@ -7,6 +7,7 @@
     "serve": "node serve.mjs",
     "test": "node tests/site.test.mjs",
     "test:finder": "node tests/finder.test.mjs",
+    "test:lab": "node tests/direction-lab.test.mjs",
     "axe": "node tests/axe-all.mjs && node tests/axe-settled.mjs"
   },
   "devDependencies": {

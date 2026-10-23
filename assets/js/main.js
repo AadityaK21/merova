@@ -121,7 +121,7 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
   var opener = $("[data-menu-open]");
   if (menu && opener) {
     var panel = $(".menu__panel", menu);
-    var closeTimer = 0, lastFocus = null;
+    var closeTimer = 0, focusTimer = 0, lastFocus = null;
     var focusables = function () {
       return $$('a[href], button:not([disabled])', panel).filter(function (el) { return el.offsetParent !== null; });
     };
@@ -137,10 +137,12 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       opener.setAttribute("aria-expanded", "true");
       sfx("open");
       var first = $(".menu__list a", panel);
-      setTimeout(function () { (first || panel).focus(); }, reduceMotion ? 0 : 120);
+      clearTimeout(focusTimer);
+      focusTimer = setTimeout(function () { if (menu.classList.contains("is-open")) (first || panel).focus(); }, reduceMotion ? 0 : 120);
     };
     var closeMenu = function (restore) {
       if (!menu.classList.contains("is-open")) return;
+      clearTimeout(focusTimer);
       menu.classList.remove("is-open");
       menu.classList.add("is-closing");
       opener.setAttribute("aria-expanded", "false");
@@ -186,7 +188,12 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       }
     });
     window.addEventListener("pageshow", function (e) {
-      if (e.persisted) { menu.classList.remove("is-open", "is-closing"); menu.hidden = true; doc.classList.remove("menu-open"); opener.setAttribute("aria-expanded", "false"); }
+      if (e.persisted) {
+        clearTimeout(closeTimer); clearTimeout(focusTimer);
+        menu.classList.remove("is-open", "is-closing"); menu.hidden = true;
+        doc.classList.remove("menu-open"); opener.setAttribute("aria-expanded", "false");
+        setInert(false);
+      }
     });
   }
 
@@ -346,32 +353,71 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     });
   }
 
-  /* ---------- Scroll: header, the Fold settling into the logo, the header logo docking ---------- */
-  var docked = false, scrollQueued = false;
-  var onScroll = function () {
-    scrollQueued = false;
-    var y = window.scrollY;
-    if (header) header.classList.toggle("is-scrolled", y > 8);
-    if (fold && hero && !reduceMotion) {
-      // progress through the hero: over the pinned stretch on desktop, over most of its height elsewhere
+  /* ---------- One scroll frame, with geometry measured only when layout changes ----------
+     Measurement runs before any visual writes. The cached positions ignore reveal transforms,
+     so scrolling back to a position always produces the same state. No idle animation loop. */
+  var scrollRaf = null, layoutDirty = true, viewportHeight = window.innerHeight;
+  var measureEffects = [], paintEffects = [], heroTop = 0, heroRange = 1;
+  var docked = false, headerScrolled = null;
+  function layoutTop(el) {
+    var top = 0;
+    while (el) { top += el.offsetTop; el = el.offsetParent; }
+    return top;
+  }
+  function measureLayout() {
+    viewportHeight = window.innerHeight;
+    if (hero) {
       var pin = $(".hero__pin", hero);
       var pinned = pin && getComputedStyle(pin).position === "sticky";
-      var range = pinned ? Math.max(1, hero.offsetHeight - pin.offsetHeight) : hero.offsetHeight * 0.7;
-      var p = clamp((y - (hero.offsetTop - (header ? header.offsetHeight : 0))) / range, 0, 1);
-      if (Math.abs(p - foldScroll) > 0.0005 || (p === 0 && foldScroll !== 0) || (p === 1 && foldScroll !== 1)) { foldScroll = p; hero.style.setProperty("--p", p.toFixed(3)); }
+      heroTop = layoutTop(hero) - (header ? header.offsetHeight : 0);
+      heroRange = Math.max(1, pinned ? hero.offsetHeight - pin.offsetHeight : hero.offsetHeight * 0.7);
+    }
+    measureEffects.forEach(function (measure) { measure(); });
+    layoutDirty = false;
+  }
+  function paintScroll() {
+    scrollRaf = null;
+    if (document.hidden) return;
+    if (layoutDirty) measureLayout();
+    var y = window.scrollY;
+    if (header && headerScrolled !== (y > 8)) {
+      headerScrolled = y > 8;
+      header.classList.toggle("is-scrolled", headerScrolled);
+    }
+    if (fold && hero) {
+      var p = reduceMotion ? 0 : clamp((y - heroTop) / heroRange, 0, 1);
+      if (p !== foldScroll) { foldScroll = p; hero.style.setProperty("--p", p.toFixed(3)); }
       if (headerBrand && p > 0.85 && !docked) {
         docked = true;
-        headerBrand.classList.remove("is-docking");
-        void headerBrand.offsetWidth;
         headerBrand.classList.add("is-docking");
-      } else if (p < 0.4) { docked = false; }
+      } else if (headerBrand && p < 0.4 && docked) {
+        docked = false;
+        headerBrand.classList.remove("is-docking");
+      }
     }
-  };
-  window.addEventListener("scroll", function () {
-    if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(onScroll); }
-  }, { passive: true });
-  window.addEventListener("resize", onScroll);
-  onScroll();
+    paintEffects.forEach(function (paint) { paint(y); });
+  }
+  function queueScroll() {
+    if (scrollRaf === null && !document.hidden) scrollRaf = requestAnimationFrame(paintScroll);
+  }
+  function invalidateLayout() { layoutDirty = true; queueScroll(); }
+  window.addEventListener("scroll", queueScroll, { passive: true });
+  window.addEventListener("resize", invalidateLayout);
+  window.addEventListener("load", invalidateLayout);
+  window.addEventListener("pageshow", invalidateLayout);
+  document.addEventListener("visibilitychange", queueScroll);
+  if (document.fonts) document.fonts.ready.then(invalidateLayout);
+  if ("ResizeObserver" in window) {
+    var layoutObserver = new ResizeObserver(invalidateLayout);
+    layoutObserver.observe(document.body);
+    if (header) layoutObserver.observe(header);
+  }
+  window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", function (event) {
+    reduceMotion = event.matches;
+    if (reduceMotion && fold) { stopMotion(); renderFold(); }
+    invalidateLayout();
+  });
+  queueScroll();
 
   /* ---------- The studio statement lights up word by word as you read down ---------- */
   var statement = $("[data-words]");
@@ -387,23 +433,16 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       if (i < text.length - 1) statement.appendChild(document.createTextNode(" "));
       words.push(s);
     });
-    var lit = -1, active = false, queued = false;
-    var paintWords = function () {
-      queued = false;
-      var r = statement.getBoundingClientRect(), vh = window.innerHeight;
-      var p = clamp((vh * 0.82 - r.top) / (r.height + vh * 0.3), 0, 1);
+    var lit = -1, statementTop = 0, statementHeight = 0;
+    measureEffects.push(function () { statementTop = layoutTop(statement); statementHeight = statement.offsetHeight; });
+    paintEffects.push(function (y) {
+      var p = reduceMotion ? 1 : clamp((viewportHeight * 0.82 - (statementTop - y)) / (statementHeight + viewportHeight * 0.3), 0, 1);
       var n = Math.round(p * words.length);
       if (n !== lit) {
         words.forEach(function (w, i) { w.classList.toggle("on", i < n); });
         lit = n;
       }
-    };
-    var queueWords = function () { if (active && !queued) { queued = true; requestAnimationFrame(paintWords); } };
-    if (hasIO) {
-      new IntersectionObserver(function (en) { active = en[0].isIntersecting; if (active) queueWords(); }).observe(statement);
-    } else { active = true; }
-    window.addEventListener("scroll", queueWords, { passive: true });
-    paintWords();
+    });
   }
 
   /* ---------- Product story: the phone stays, the chapters change its screen ---------- */
@@ -443,30 +482,30 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
   var chapter = $(".chapter");
   var chapters = $$("[data-chapter]");
   if (chapter && chapters.length) {
-    var cn = $(".chapter__n", chapter), cname = $(".chapter__name", chapter), foot = $(".site-footer"), cur = null, cq = false;
-    var syncChapter = function () {
-      cq = false;
-      var mid = window.innerHeight * 0.5, now = null;
-      for (var i = 0; i < chapters.length; i++) { if (chapters[i].getBoundingClientRect().top <= mid) now = chapters[i]; }
-      var footTop = foot ? foot.getBoundingClientRect().top : Infinity;
-      var hide = !now || now === chapters[0] || footTop < window.innerHeight * 0.85 || doc.classList.contains("menu-open");
+    var cn = $(".chapter__n", chapter), cname = $(".chapter__name", chapter), foot = $(".site-footer"), cur = null;
+    var chapterTops = [], footerTop = Infinity;
+    measureEffects.push(function () {
+      chapterTops = chapters.map(layoutTop);
+      footerTop = foot ? layoutTop(foot) : Infinity;
+    });
+    paintEffects.push(function (y) {
+      var mid = y + viewportHeight * 0.5, now = null;
+      for (var i = 0; i < chapters.length; i++) { if (chapterTops[i] <= mid) now = chapters[i]; }
+      var hide = !now || now === chapters[0] || footerTop - y < viewportHeight * 0.85 || doc.classList.contains("menu-open");
       chapter.classList.toggle("is-hidden", hide);
       if (now && now !== cur) {
         cur = now;
         cn.textContent = now.getAttribute("data-chapter");
         cname.textContent = now.getAttribute("data-chapter-name");
       }
-    };
-    window.addEventListener("scroll", function () { if (!cq) { cq = true; requestAnimationFrame(syncChapter); } }, { passive: true });
-    window.addEventListener("resize", syncChapter);
-    syncChapter();
+    });
   }
 
   /* ---------- Reversible reveals ----------
      Decided from scroll position on every scroll frame, not from one-off events, so jumps (scrollbar drags,
      "Back to top", anchor links) can't leave anything stuck. Above the reveal line: shown. Pushed back
      below the bottom of the screen (scrolling up): reset, so it plays again on the way down. */
-  var revealEls = [], growEls = [], rq = false;
+  var revealEls = [], growEls = [], revealTops = [], growTops = [], growProgress = [];
   // wrap every word of a heading in a mask, keeping inner elements (like the italic word) intact
   function splitWords(el) {
     var n = 0;
@@ -487,21 +526,19 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       });
     })(el);
   }
-  var paintReveals = function () {
-    rq = false;
-    var vh = window.innerHeight;
+  var paintReveals = function (y) {
+    var vh = viewportHeight;
     // light sections open from a card to full bleed while their top travels up the screen
     for (var g = 0; g < growEls.length; g++) {
-      var gt = growEls[g].getBoundingClientRect().top;
-      growEls[g].style.setProperty("--e", clamp((vh - gt) / (vh * 0.55), 0, 1).toFixed(3));
+      var next = reduceMotion ? "1" : clamp((vh - (growTops[g] - y)) / (vh * 0.55), 0, 1).toFixed(3);
+      if (next !== growProgress[g]) { growEls[g].style.setProperty("--e", next); growProgress[g] = next; }
     }
     for (var i = 0; i < revealEls.length; i++) {
-      var el = revealEls[i], top = el.getBoundingClientRect().top;
-      if (top < vh * 0.9) { if (!el.classList.contains("is-in")) el.classList.add("is-in"); }
+      var el = revealEls[i], top = revealTops[i] - y;
+      if (reduceMotion || top < vh * 0.9) { if (!el.classList.contains("is-in")) el.classList.add("is-in"); }
       else if (top > vh) { if (el.classList.contains("is-in")) el.classList.remove("is-in"); }
     }
   };
-  var queueReveals = function () { if (!rq) { rq = true; requestAnimationFrame(paintReveals); } };
   if (!reduceMotion) {
     var vh0 = window.innerHeight;
     $$(".wcard, .case__frame, .case__hero, .wrow, .svc, .steps4 li, .pixels__specs > div").forEach(function (el) {
@@ -511,9 +548,8 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       if (h.getBoundingClientRect().top > vh0 * 0.9) { splitWords(h); h.classList.add("rv-words"); revealEls.push(h); }
     });
     $$(".grow").forEach(function (g) { growEls.push(g); });
-    window.addEventListener("scroll", queueReveals, { passive: true });
-    window.addEventListener("resize", queueReveals);
-    paintReveals();
+    measureEffects.push(function () { revealTops = revealEls.map(layoutTop); growTops = growEls.map(layoutTop); });
+    paintEffects.push(paintReveals);
     window.addEventListener("beforeprint", function () { revealEls.forEach(function (el) { el.classList.add("is-in"); }); });
   }
 
@@ -571,6 +607,7 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     cue.innerHTML = '<span class="pcur__dot"></span><span class="pcur__label"></span>';
     document.body.appendChild(cue);
     var cueLabel = $(".pcur__label", cue), cueOn = null, cx = 0, cy = 0, tx = 0, ty = 0, cueRaf = null;
+    var cueBounds = null, cueWidth = 120, cueHeight = 32;
     var moveCue = function () {
       cx += (tx - cx) * (reduceMotion ? 1 : 0.32);
       cy += (ty - cy) * (reduceMotion ? 1 : 0.32);
@@ -580,10 +617,15 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     };
     var track = function (e) {
       // keep the label inside the area it describes, so it never sits on the project title below
-      var r = cueOn.getBoundingClientRect(), w = cue.offsetWidth || 120, h = cue.offsetHeight || 32;
-      tx = clamp(e.clientX + 14, r.left + 8, r.right - w - 8);
-      ty = clamp(e.clientY + 14, r.top + 8, r.bottom - h - 8);
+      var r = cueBounds;
+      tx = clamp(e.clientX + 14, r.left + 8, r.right - cueWidth - 8);
+      ty = clamp(e.clientY + 14, r.top + 8, r.bottom - cueHeight - 8);
       if (!cueRaf) cueRaf = requestAnimationFrame(moveCue);
+    };
+    var hideCue = function () {
+      cueOn = null;
+      cue.classList.remove("is-on");
+      if (cueRaf) { cancelAnimationFrame(cueRaf); cueRaf = null; }
     };
     $$("[data-cursor]").forEach(function (el) {
       var activate = function (e) {
@@ -591,57 +633,41 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
         cueOn = el;
         cueLabel.textContent = el.getAttribute("data-cursor");
         cue.classList.toggle("pcur--view", el.getAttribute("data-cursor-kind") === "view");
-        var r = el.getBoundingClientRect();
+        var r = cueBounds = el.getBoundingClientRect();
+        cueWidth = cue.offsetWidth || 120; cueHeight = cue.offsetHeight || 32;
         cx = tx = clamp(e.clientX + 14, r.left + 8, r.right - 140); cy = ty = clamp(e.clientY + 14, r.top + 8, r.bottom - 40);
-        track(e); moveCue();
+        track(e);
         cue.classList.add("is-on");
       };
       el.addEventListener("pointerenter", activate);
       // after a scroll hides it, the first move inside brings it straight back
       el.addEventListener("pointermove", function (e) { if (cueOn === el) track(e); else activate(e); });
-      el.addEventListener("pointerleave", function () { if (cueOn === el) { cueOn = null; cue.classList.remove("is-on"); } });
+      el.addEventListener("pointerleave", function () { if (cueOn === el) hideCue(); });
     });
-    window.addEventListener("scroll", function () { if (cueOn) { cueOn = null; cue.classList.remove("is-on"); } }, { passive: true });
+    window.addEventListener("scroll", hideCue, { passive: true });
+    window.addEventListener("resize", hideCue);
+    document.addEventListener("visibilitychange", function () { if (document.hidden) hideCue(); });
   }
   // project hover: a soft breath of sound, once per entry
   $$(".wcard__visual, .wrow__link").forEach(function (el) { hoverSound(el, "hover"); });
 
-  /* ---------- The band: moves with the scroll ----------
-     Position is a function of scroll position only: scroll down and it runs left, scroll up and it runs
-     back right, by exactly the same amount. A little easing smooths it; it never loops on its own. */
+  /* ---------- The band: native scroll drives a single transform ----------
+     No secondary easing loop or layout reads while scrolling. The same position gives
+     the same offset in either direction, including scrollbar jumps and back navigation. */
   var band = $(".talk__track");
-  if (band && !reduceMotion) {
-    var bandBox = band.parentNode, bandX = null, bandTarget = 0, bandRaf = null, bandVisible = false;
-    var bandSpan = function () { return band.scrollWidth / 2; };
-    var bandTop = 0;
-    var measureBand = function () { var t = 0, el = bandBox; while (el) { t += el.offsetTop; el = el.offsetParent; } bandTop = t; };
-    measureBand();
-    window.addEventListener("resize", function () { measureBand(); bandScroll(); });
-    window.addEventListener("load", measureBand);
-    var bandGoal = function () {
-      measureBand();
-      var travel = (window.scrollY + window.innerHeight - bandTop) * 0.6;      // 0 when the band first appears
-      var span = bandSpan() || 1;
-      return -(((travel % span) + span) % span);
-    };
-    var bandStep = function () {
-      if (bandX === null) bandX = bandTarget;
-      var d = bandTarget - bandX, span = bandSpan() || 1;
-      if (d > span / 2) bandX += span; else if (d < -span / 2) bandX -= span;   // wrap without a visible jump
-      bandX += (bandTarget - bandX) * 0.16;
-      band.style.setProperty("--bx", bandX.toFixed(2) + "px");
-      if (Math.abs(bandTarget - bandX) <= 0.2) { bandX = bandTarget; band.style.setProperty("--bx", bandX.toFixed(2) + "px"); bandRaf = null; }
-      else bandRaf = requestAnimationFrame(bandStep);
-    };
-    var bandScroll = function () {
-      if (!bandVisible) return;
-      bandTarget = bandGoal();
-      if (!bandRaf) bandRaf = requestAnimationFrame(bandStep);
-    };
-    if (hasIO) new IntersectionObserver(function (en) { bandVisible = en[0].isIntersecting; bandScroll(); }, { rootMargin: "200px 0px" }).observe(bandBox);
-    else bandVisible = true;
-    window.addEventListener("scroll", bandScroll, { passive: true });
-    bandTarget = bandGoal(); bandStep();
+  if (band) {
+    var bandTop = 0, bandWidth = 1, bandHeight = 0, bandX = null;
+    measureEffects.push(function () {
+      bandTop = layoutTop(band.parentNode);
+      bandWidth = band.scrollWidth / 2 || 1;
+      bandHeight = band.parentNode.offsetHeight;
+    });
+    paintEffects.push(function (y) {
+      if (!reduceMotion && (bandTop - y > viewportHeight + 200 || bandTop + bandHeight - y < -200)) return;
+      var travel = (y + viewportHeight - bandTop) * 0.6;
+      var x = reduceMotion ? "0.00" : (-(((travel % bandWidth) + bandWidth) % bandWidth)).toFixed(2);
+      if (x !== bandX) { bandX = x; band.style.setProperty("--bx", x + "px"); }
+    });
   }
 
   /* ---------- Copy buttons (contact emails, brand colours) ---------- */
@@ -791,6 +817,66 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
     });
     window.addEventListener("pageshow", function () { paintProject(false); });
     paintProject(false);
+  }
+
+  /* ---------- Direction lab: one concept, three ways to tell its story ----------
+     Local UI only. A direction enters the optional brief only when the visitor chooses
+     "Use this direction"; it is sent through the existing enquiry flow. */
+  var directionLab = $("[data-direction-lab]");
+  if (directionLab) {
+    var directions = {
+      editorial: { name: "Editorial", description: "Expressive type, generous space and a story worth slowing down for." },
+      bold: { name: "Bold", description: "Big statements, strong contrast and a confident first impression." },
+      minimal: { name: "Minimal", description: "A quieter interface that puts the idea and the next step first." }
+    };
+    var labDirections = $$("[data-lab-direction]", directionLab);
+    var labDevices = $$("[data-lab-device]", directionLab);
+    var labStatus = $("[data-lab-status]", directionLab);
+    function labChoice(inputs, fallback) {
+      var input = inputs.filter(function (item) { return item.checked; })[0];
+      return input ? input.value : fallback;
+    }
+    function paintLab(announce) {
+      var key = labChoice(labDirections, "editorial");
+      if (!Object.prototype.hasOwnProperty.call(directions, key)) key = "editorial";
+      var device = labChoice(labDevices, "desktop") === "mobile" ? "mobile" : "desktop";
+      directionLab.dataset.direction = key;
+      directionLab.dataset.device = device;
+      $("[data-lab-direction-name]", directionLab).textContent = directions[key].name;
+      $("[data-lab-description]", directionLab).textContent = directions[key].description;
+      if (announce && labStatus) {
+        labStatus.classList.add("visually-hidden");
+        labStatus.textContent = directions[key].name + " direction, " + (device === "mobile" ? "phone" : "desktop") + " preview.";
+      }
+      invalidateLayout();
+    }
+    labDirections.concat(labDevices).forEach(function (input) {
+      input.addEventListener("change", function () { paintLab(true); });
+    });
+    var useDirection = $("[data-lab-use]", directionLab);
+    if (useDirection && finder) useDirection.addEventListener("click", function (event) {
+      var name = directions[directionLab.dataset.direction].name;
+      var line = "Visual direction: " + name + " (Merova direction lab).";
+      // Replace only this tool's own line. Keep the visitor's writing intact.
+      var note = finderNote.value.replace(/(?:\r?\n){0,2}^Visual direction: (?:Editorial|Bold|Minimal) \(Merova direction lab\)\.$/gm, "");
+      var next = note + (note ? "\n\n" : "") + line;
+      if (next.length > finderNote.maxLength) {
+        event.preventDefault();
+        labStatus.classList.remove("visually-hidden");
+        labStatus.textContent = "Your brief is full. Shorten the note in the project finder before adding a direction.";
+        invalidateLayout();
+        return;
+      }
+      finderNote.value = next;
+      labStatus.classList.add("visually-hidden");
+      finderNote.dispatchEvent(new Event("input", { bubbles: true }));
+      if (finderStatus) finderStatus.textContent = name + " direction added to your optional note. Choose a starting point below.";
+      var target = $(".finder__title", finder);
+      if (target) { target.setAttribute("tabindex", "-1"); target.focus({ preventScroll: true }); }
+      invalidateLayout();
+    });
+    window.addEventListener("pageshow", function () { paintLab(false); });
+    paintLab(false);
   }
   var enquiry = $("#enquiry-form");
   if (enquiry) {

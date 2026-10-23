@@ -10,7 +10,7 @@ The production site is plain HTML, CSS and JavaScript. A Python script generates
 | --- | --- |
 | `tools/build.py` | Page content, shared header and footer, portfolio data, forms, sitemap, security.txt and brand-kit archive |
 | `assets/css/style.css` | Design tokens, layout, responsive styling and motion |
-| `assets/js/main.js` | Fold controls, menu, reversible scroll effects, sound, project finder and form behaviour |
+| `assets/js/main.js` | Fold controls, menu, reversible scroll effects, sound, direction lab, project finder and form behaviour |
 | `assets/fonts/` | Self-hosted Instrument Sans, Instrument Serif and IBM Plex Mono |
 | `assets/work/`, `assets/fit/` | Portfolio and product images |
 | `assets/og/` | Social link-preview images |
@@ -40,6 +40,8 @@ Open `http://localhost:8765`. Keep this terminal running while testing. The loca
 
 The project finder is at `/#services`. It recommends a service from the visitor's choice and carries a draft brief into `/services#enquire`. The visitor can edit the brief before submitting. Use the direct enquiry link when guidance is not needed.
 
+The direction lab at `/#direction-lab` compares three compositions of the same fictional studio concept, with desktop and phone previews. "Use this direction" adds the choice to the optional finder note without replacing the visitor's writing. It uses local HTML/CSS and no external services.
+
 ## Check changes
 
 With the preview server running, use another terminal:
@@ -49,6 +51,7 @@ cd tools
 npx playwright install chromium
 npm test
 npm run test:finder
+npm run test:lab
 npm run axe
 ```
 
@@ -67,6 +70,7 @@ Check desktop at 1440 by 1000, tablet at 1024 by 768 and mobile at 390 by 844. V
 - Instrument Sans for text and interface labels; Instrument Serif for selected display moments; IBM Plex Mono for technical readouts.
 - The two-plane Fold is the signature interaction. Scroll progress changes its unfolding, while the user's controls own its angle.
 - Scroll effects must reproduce the same state at the same scroll position in either direction. Respect reduced motion.
+- The scroll renderer shares one animation frame and reads cached layout positions. Refresh geometry on layout, font, resize and page-restoration events; keep layout reads out of the scroll paint phase.
 - Sound is off by default and starts only after a visitor chooses to enable it.
 - Keep all portfolio items labelled `Self-initiated` until real client work is approved for publication. Do not invent clients, testimonials, prices, outcomes or product capabilities.
 - Keep the owner's personal name off marketing pages and use plain English without em dashes.
@@ -85,7 +89,7 @@ Business address, court city, pricing and legal-policy placeholders need confirm
 
 The handoff identifies Vercel as the production host and `main` in [AadityaK21/merova](https://github.com/AadityaK21/merova) as the deployment branch. A push to `main` can publish the site. Commit and push only with the owner's approval. Changes to DNS, email, payments or the hosting plan also need prior approval.
 
-This local folder was supplied as copied files and had no `.git` directory when reviewed on 22 October 2026. GitHub access was verified against `main` at `e7fa568`. The folder still needs to be connected to Git before pulling or pushing. Preserve local edits and compare them with the authenticated reference clone before syncing. Do not use a forced checkout or reset to connect the folder.
+The supplied `C:\merova` working folder contains copied files and has no `.git` directory. Releases use a separate authenticated clone of this repository. Copy only reviewed source changes into that clone, regenerate the pages there, and inspect the diff before committing. Keep the clone's optimized images and fonts. Do not replace the working folder with a forced checkout or reset.
 
 `.vercelignore` excludes `AGENTS.md`, `README.md`, `tools/` and `briefs/` from deployment. Keep these exclusions. The `CNAME` and `.nojekyll` files are retained from the older GitHub Pages setup; they are not instructions to change DNS or turn Pages back on.
 

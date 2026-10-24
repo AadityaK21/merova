@@ -11,6 +11,10 @@ const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
 const server = http.createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/\\/g, '/');
+    // Mirror the simple redirects in vercel.json ("/a" and "/a/:path*" forms).
+    const redirect = (config.redirects || []).find(r => r.source.endsWith('/:path*')
+      ? pathname.startsWith(r.source.slice(0, -7) + '/') : pathname === r.source);
+    if (redirect) { res.writeHead(redirect.permanent ? 308 : 307, { ...security, Location: redirect.destination }).end(); return; }
     const relative = pathname.replace(/^\/+/, '') || 'index.html';
     let file = path.resolve(root, relative);
     const segments = relative.split('/');

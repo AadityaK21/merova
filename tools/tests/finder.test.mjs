@@ -1,8 +1,9 @@
 import { chromium, devices } from 'playwright';
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+const SHOW_WORK = /^SHOW_WORK = True/m.test(readFileSync(new URL('../build.py', import.meta.url), 'utf8'));
 const base = process.env.BASE_URL || 'http://localhost:8765';
 const shots = fileURLToPath(new URL('./shots/finder/', import.meta.url));
 mkdirSync(shots, { recursive: true });
@@ -30,10 +31,14 @@ try {
     for (const [key, title, href] of variants) {
       await page.locator(`[data-project-choice][value="${key}"]`).check();
       check(await page.locator('[data-finder-title]').textContent() === title, label + ': ' + key + ' recommends the matching service');
-      check(await page.locator('[data-finder-work]').getAttribute('href') === href, label + ': ' + key + ' links to real work');
-      await page.locator('[data-finder-image]').scrollIntoViewIfNeeded();
-      await page.locator('[data-finder-image]').evaluate(image => image.decode());
-      check(await page.locator('[data-finder-image]').evaluate(image => image.complete && image.naturalWidth > 0), label + ': ' + key + ' preview loads');
+      if (SHOW_WORK) {
+        check(await page.locator('[data-finder-work]').getAttribute('href') === href, label + ': ' + key + ' links to real work');
+        await page.locator('[data-finder-image]').scrollIntoViewIfNeeded();
+        await page.locator('[data-finder-image]').evaluate(image => new Promise(done => image.complete && image.naturalWidth ? done() : (image.onload = done, image.onerror = done, setTimeout(done, 3000))));
+        check(await page.locator('[data-finder-image]').evaluate(image => image.complete && image.naturalWidth > 0), label + ': ' + key + ' preview loads');
+      } else {
+        check(await page.locator('[data-finder-work], a[href^="/work"]').count() === 0, label + ': ' + key + ' shows no portfolio link while work is hidden');
+      }
     }
     await page.locator('[data-project-choice][value="app"]').check();
     await page.locator('[data-finder-timeline]').selectOption({ label: 'Within a month' });
@@ -110,7 +115,7 @@ try {
   const staticPage = await noScript.newPage();
   await staticPage.goto(base + '/', { waitUntil: 'networkidle' });
   check(await staticPage.locator('.finder__noscript a').isVisible() && !await staticPage.locator('.finder__inputs').isVisible(), 'no JavaScript: a clear direct enquiry replaces inactive controls');
-  check(await staticPage.locator('[data-finder-work]').isVisible(), 'no JavaScript: real work example remains available');
+  check(SHOW_WORK ? await staticPage.locator('[data-finder-work]').isVisible() : await staticPage.locator('[data-finder-work]').count() === 0, SHOW_WORK ? 'no JavaScript: real work example remains available' : 'no JavaScript: no portfolio link while work is hidden');
   await noScript.close();
 
   const touch = await browser.newContext({ ...devices['iPhone 13'], reducedMotion: 'reduce' });

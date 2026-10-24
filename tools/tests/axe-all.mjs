@@ -1,9 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync } from 'node:fs';
 const SP = process.argv[2] || fileURLToPath(new URL('.', import.meta.url));
-const pages = (process.argv[3] || ',services,work,about,contact,fit,work/company-hub,work/the-fold').split(',');
+const showWork = /^SHOW_WORK = True/m.test(readFileSync(new URL('../build.py', import.meta.url), 'utf8'));
+const pages = (process.argv[3] || ',services,work,about,contact,fit,work/company-hub,work/the-fold').split(',').filter(p => showWork || !p.startsWith('work'));
 const tag = process.argv[4] || 'a';
 mkdirSync(`${SP}/shots`, { recursive: true });
 const b = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined });

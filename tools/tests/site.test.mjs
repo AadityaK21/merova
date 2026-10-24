@@ -1,8 +1,12 @@
 import { chromium, devices } from 'playwright';
 const B = process.env.BASE_URL || 'http://localhost:8765';
 import { fileURLToPath } from 'node:url'; const S = process.env.SHOTS_DIR || fileURLToPath(new URL('./shots', import.meta.url));
-import { mkdirSync } from 'node:fs'; mkdirSync(S, { recursive: true });
+import { mkdirSync, readFileSync } from 'node:fs'; mkdirSync(S, { recursive: true });
 const EXE = process.env.CHROME_PATH || undefined;
+// The portfolio can be switched off in build.py (SHOW_WORK). The work checks follow that switch.
+const SHOW_WORK = /^SHOW_WORK = True/m.test(readFileSync(new URL('../build.py', import.meta.url), 'utf8'));
+const WORK_PAGES = SHOW_WORK ? ['/work', '/work/company-hub', '/work/merova-site', '/work/the-fold'] : [];
+const withWork = list => list.filter(p => SHOW_WORK || !p.startsWith('/work'));
 const b = await chromium.launch({ executablePath: EXE });
 const out = []; const ok = (c, m) => { out.push((c ? 'PASS ' : 'FAIL ') + m); };
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -116,6 +120,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   const resetBelow = await pg.evaluate(() => [...document.querySelectorAll('.rv, .rv-box, .rv-words')].filter(e => e.getBoundingClientRect().top > innerHeight * 1.2).every(e => !e.classList.contains('is-in')));
   ok(stuckDown === 0 && stuckUp === 0 && resetBelow, `${tag}: reveals reverse cleanly (stuck at bottom ${stuckDown}, at top ${stuckUp}, below-fold reset ${resetBelow})`);
 
+  if (SHOW_WORK) {
   // ---- home teaser: compact, links to /work, list drives the preview
   const teaser = await pg.evaluate(() => ({ grid: !!document.querySelector('.wgrid'), cards: document.querySelectorAll('.wcard').length, items: document.querySelectorAll('.tlist__link').length, all: [...document.querySelectorAll('.teaser a.btn')].map(a => a.getAttribute('href')), hero: [...document.querySelectorAll('.hero a.btn')].map(a => a.textContent.trim() + '=' + a.getAttribute('href')), nav: document.querySelector('.bar__link').getAttribute('href') }));
   ok(!teaser.grid && teaser.cards === 0 && teaser.items === 4 && teaser.all.includes('/work'), `${tag}: home has a compact teaser (no gallery), ${teaser.items} entries and See all work -> /work`);
@@ -126,6 +131,10 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
     const sw = await pg.evaluate(() => ({ on: [...document.querySelectorAll('.teaser__slide')].findIndex(s => s.classList.contains('is-on')), href: document.querySelector('.teaser__stage').getAttribute('href'), cap: document.querySelector('[data-teaser-title]').textContent }));
     ok(sw.on === 2 && sw.href === '/work/merova-site' && sw.cap === 'merova.app', `${tag}: hovering a project name swaps the preview and its link (${sw.cap} -> ${sw.href})`);
     await pg.evaluate(() => scrollTo({ top: 0, behavior: 'instant' })); await wait(500);
+  }
+  } else {
+    const hidden = await pg.evaluate(() => ({ work: document.querySelectorAll('a[href^="/work"], #work, .teaser').length, hero: [...document.querySelectorAll('.hero .btn')].map(a => a.getAttribute('href')) }));
+    ok(hidden.work === 0 && hidden.hero.includes('/services#enquire') && hidden.hero.includes('/services'), `${tag}: portfolio hidden: no work section or Work links; hero goes to Start a project and the services`);
   }
 
   // ---- the Fold controls, including while the page is scrolled
@@ -153,7 +162,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   await pg.click('.menu-btn'); await wait(900);
   const m1 = await pg.evaluate(() => ({ open: document.getElementById('menu').classList.contains('is-open'), lock: getComputedStyle(document.documentElement).overflow, inert: document.querySelector('main').inert, items: [...document.querySelectorAll('.menu__list a')].map(a => a.textContent.replace(/\d|→/g, '').trim()), focusIn: !!document.activeElement.closest('.menu') }));
   ok(m1.open && m1.lock === 'hidden' && m1.inert && m1.focusIn, `${tag}: menu opens, locks scroll, makes the page inert, moves focus in`);
-  ok(m1.items.join(',') === 'Home,Work,Services,Studio,Contact', `${tag}: menu items ${m1.items.join(', ')}`);
+  ok(m1.items.join(',') === (SHOW_WORK ? 'Home,Work,Services,Studio,Contact' : 'Home,Services,Studio,Contact'), `${tag}: menu items ${m1.items.join(', ')}`);
   const panel = await (await pg.$('.menu__panel')).boundingBox();
   ok(Math.abs(panel.x + panel.width - W) < 1, `${tag}: drawer is attached to the right edge (${Math.round(panel.width)}px wide)`);
   await pg.screenshot({ path: `${S}/t6-${tag}-menu.png` });
@@ -186,7 +195,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   await wait(600);
   n0 = await pg.evaluate(() => window.__snd);
   const muted = pg.evaluate(() => window.__listen(400));
-  await rows[2].hover(); await wait(80); await rows[4].hover();
+  await rows[2].hover(); await wait(80); await rows[rows.length - 1].hover();
   const mpeak = await muted;
   n1 = await pg.evaluate(() => window.__snd);
   ok(n1 === n0 && mpeak < 0.001 && await pg.evaluate(() => localStorage.getItem('merova-sound')) === 'off', `${tag}: turning sound off silences it immediately and remembers (peak ${mpeak.toFixed(4)})`);
@@ -194,6 +203,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
 
   // ---- context cursor (desktop and laptop only)
   if (W > 600) {
+   if (SHOW_WORK) {
     await pg.evaluate(() => document.querySelector('#work').scrollIntoView({ behavior: 'instant' })); await wait(1400);
     const vis = await (await pg.$('.teaser__stage')).boundingBox();
     await pg.mouse.move(vis.x + 30, vis.y + 30); await pg.mouse.move(vis.x + vis.width * 0.6, vis.y + vis.height * 0.9, { steps: 6 }); await wait(500);
@@ -203,6 +213,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
     await pg.screenshot({ path: `${S}/t6-${tag}-cursor.png` });
     await pg.mouse.move(5, vis.y - 60); await wait(300);
     ok(!(await pg.evaluate(() => document.querySelector('.pcur').classList.contains('is-on'))), `${tag}: label goes away when leaving the image`);
+   }
     ok(await pg.$eval('.btn--primary', e => getComputedStyle(e).cursor) === 'pointer' && await pg.$eval('main p', e => getComputedStyle(e).cursor) === 'auto', `${tag}: ordinary cursor everywhere else`);
     await pg.evaluate(() => scrollTo({ top: 0, behavior: 'instant' })); await wait(500);
     const sc = await (await pg.$('.fold3d__scene')).boundingBox();
@@ -213,12 +224,12 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
 
   // ---- overflow on every page
   const over = [];
-  for (const p of ['/', '/work', '/services', '/about', '/contact', '/fit', '/work/company-hub', '/work/merova-site', '/work/the-fold', '/brand', '/privacy']) {
+  for (const p of withWork(['/', '/work', '/services', '/about', '/contact', '/fit', '/work/company-hub', '/work/merova-site', '/work/the-fold', '/brand', '/privacy'])) {
     await pg.goto(B + p, { waitUntil: 'networkidle' });
     const sw = await pg.evaluate(() => document.documentElement.scrollWidth);
     if (sw > W) over.push(p + ':' + sw);
   }
-  ok(over.length === 0, `${tag}: no horizontal overflow on 11 pages ${over.join(' ')}`);
+  ok(over.length === 0, `${tag}: no horizontal overflow on ${withWork(['/', '/work', '/services', '/about', '/contact', '/fit', '/work/company-hub', '/work/merova-site', '/work/the-fold', '/brand', '/privacy']).length} pages ${over.join(' ')}`);
   ok(errs.length === 0, `${tag}: no console errors ${errs.slice(0, 3).join(' | ')}`);
   await ctx.close();
 }
@@ -230,6 +241,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   await ctx.addInitScript(() => localStorage.setItem('merova-sound', 'on'));
   const pg = await ctx.newPage();
   await pg.goto(B + '/', { waitUntil: 'networkidle' }); await wait(1500);
+  if (SHOW_WORK) {
   await pg.evaluate(() => document.querySelector('#work').scrollIntoView({ behavior: 'instant' })); await wait(1200);
   const v = await (await pg.$('.teaser__stage')).boundingBox();
   await pg.mouse.move(v.x + 50, v.y + 50, { steps: 3 }); await wait(200);
@@ -239,6 +251,14 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   await pg.mouse.move(5, v.y - 40); await pg.mouse.move(v.x + 60, v.y + 60, { steps: 3 }); await wait(250);
   const after = await pg.evaluate(() => window.__snd);
   ok(after > 0, `remembered "on": after a click, the project hover cue plays (${after} tones)`);
+  } else {
+    const before = await pg.evaluate(() => ({ n: window.__snd, c: window.__ctx }));
+    ok(before.c === 0 && before.n === 0, 'remembered "on": no audio before the visitor clicks anything');
+    await pg.mouse.click(20, 500); await wait(200);
+    await pg.click('[data-fold="align"]'); await wait(1600);
+    const after = await pg.evaluate(() => window.__snd);
+    ok(after > 0, `remembered "on": after a click, the Line up cue plays (${after} tones)`);
+  }
   await ctx.close();
 }
 
@@ -256,7 +276,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   await pg.click('#enquiry-form button[type=submit]'); await wait(600);
   ok(posted === 1 && /Within a month/.test(body || '') && (await pg.$eval('#enquiry-form .form-status', e => e.textContent)).startsWith('Thanks'), 'enquiry sends idea, timeline and budget, and confirms');
   const links = new Set(), mailtos = new Set(); let payText = [];
-  for (const p of ['/', '/work', '/services', '/about', '/contact', '/fit', '/work/company-hub', '/work/merova-site', '/work/the-fold', '/brand']) {
+  for (const p of withWork(['/', '/work', '/services', '/about', '/contact', '/fit', '/work/company-hub', '/work/merova-site', '/work/the-fold', '/brand'])) {
     await pg.goto(B + p, { waitUntil: 'domcontentloaded' });
     (await pg.$$eval('a[href]', as => as.map(a => a.getAttribute('href')))).forEach(h => { if (h.startsWith('mailto:')) mailtos.add(h.split('?')[0]); else if (h.startsWith('/') || (!h.includes(':') && !h.startsWith('#'))) links.add(h.startsWith('/') ? h : '/' + h); });
     const t = await pg.evaluate(() => document.body.innerText + ' ' + [...document.querySelectorAll('a[href]')].map(a => a.href).join(' '));
@@ -264,10 +284,11 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   }
   const bad = []; for (const l of links) { const r = await pg.request.get(B + l.split('#')[0]); if (r.status() !== 200) bad.push(l + ' ' + r.status()); }
   ok(bad.length === 0, `all ${links.size} internal links work ${bad.join(',')}`);
+  if (!SHOW_WORK) { const r = await pg.request.get(B + '/work/the-fold', { maxRedirects: 0 }); ok([307, 308].includes(r.status()) && r.headers()['location'] === '/', `old /work links redirect home (${r.status()})`); }
   ok([...mailtos].every(m => /^mailto:(hello|support)@merova\.app$/.test(m)) && mailtos.has('mailto:hello@merova.app'), `email links: ${[...mailtos].join(', ')}`);
   ok(payText.length === 0, 'no payment or booking button published anywhere ' + payText.join(','));
   const named = [];
-  for (const p of ['/', '/work', '/services', '/about', '/fit', '/work/company-hub', '/work/merova-site', '/work/the-fold']) {
+  for (const p of withWork(['/', '/work', '/services', '/about', '/fit', '/work/company-hub', '/work/merova-site', '/work/the-fold'])) {
     const html = await (await pg.request.get(B + p)).text();
     if (/Aaditya|Kumawat|IIT Delhi/.test(html)) named.push(p);
   }

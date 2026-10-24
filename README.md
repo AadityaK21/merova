@@ -1,6 +1,6 @@
 # merova.app
 
-Merova is an independent digital studio in India. The site introduces its website, interactive-site and web-app services, shows self-initiated work, and accepts project enquiries. Merova Fit is one of the studio's own products.
+Merova is an independent digital studio in India. The site introduces its website, interactive-site and web-app services, and accepts project enquiries. The portfolio is currently hidden (see below). Merova Fit is one of the studio's own products.
 
 The production site is plain HTML, CSS and JavaScript. A Python script generates the pages; there is no front-end framework or bundler.
 
@@ -72,6 +72,7 @@ Check desktop at 1440 by 1000, tablet at 1024 by 768 and mobile at 390 by 844. V
 - Scroll effects must reproduce the same state at the same scroll position in either direction. Respect reduced motion.
 - The scroll renderer shares one animation frame and reads cached layout positions. Refresh geometry on layout, font, resize and page-restoration events; keep layout reads out of the scroll paint phase.
 - Sound is off by default and starts only after a visitor chooses to enable it.
+- **Portfolio switch:** `SHOW_WORK = False` near the top of `tools/build.py` hides Work everywhere (navigation, home teaser, finder preview, `/work` and the case pages, sitemap). `vercel.json` temporarily redirects `/work` and `/work/*` to the home page. To show the work again: set `SHOW_WORK = True`, remove the two `redirects` in `vercel.json`, rebuild, and run the tests (they follow the switch).
 - Keep all portfolio items labelled `Self-initiated` until real client work is approved for publication. Do not invent clients, testimonials, prices, outcomes or product capabilities.
 - Keep the owner's personal name off marketing pages and use plain English without em dashes.
 

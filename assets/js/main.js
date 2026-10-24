@@ -795,12 +795,15 @@ var WEB3FORMS_KEY = "37772fc7-8593-4118-9602-67d28a2ed094";
       project.includes.forEach(function (text) {
         var li = document.createElement("li"); li.textContent = text; includes.appendChild(li);
       });
-      var image = $("[data-finder-image]", finder);
-      image.src = project.image; image.alt = project.alt;
+      // The project preview only exists while the portfolio is shown (SHOW_WORK in build.py).
       var work = $("[data-finder-work]", finder);
-      work.href = project.href;
-      $("[data-finder-project]", finder).textContent = project.project;
-      $("[data-finder-kind]", finder).textContent = project.kind;
+      if (work) {
+        var image = $("[data-finder-image]", finder);
+        image.src = project.image; image.alt = project.alt;
+        work.href = project.href;
+        $("[data-finder-project]", finder).textContent = project.project;
+        $("[data-finder-kind]", finder).textContent = project.kind;
+      }
       finderContinue.href = "/services?type=" + key + "&from=finder#enquire";
       if (finderStatus) finderStatus.textContent = (announce ? "Starting point updated: " : "Starting point: ") + project.title + ".";
     }

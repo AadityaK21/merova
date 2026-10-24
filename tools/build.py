@@ -6,6 +6,9 @@ import pathlib, re, sys
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else pathlib.Path(__file__).resolve().parent.parent)
 UPDATED = "12 October 2026"
 SITE = "https://merova.app"
+# Portfolio switch. False hides Work everywhere: nav, home teaser, /work and the case pages
+# (vercel.json sends /work to the home page). Set True and rebuild to bring it back.
+SHOW_WORK = False
 
 def ph(text):
     return f'<span class="ph">[{text}]</span>'
@@ -218,11 +221,14 @@ def _ver(rel):
 HEAD = (HEAD.replace('assets/css/style.css"', 'assets/css/style.css?v=' + _ver("assets/css/style.css") + '"')
             .replace('assets/js/main.js"', 'assets/js/main.js?v=' + _ver("assets/js/main.js") + '"'))
 
+FOOT_WORK = '          <li><a href="/work">Work</a></li>\n' if SHOW_WORK else ""
+
 def header(active, b):
     def cur(name):
         return ' aria-current="page"' if active == name else ""
-    items = [("home", "/", "Home"), ("work", "/work", "Work"), ("services", "/services", "Services"),
+    items = [("home", "/", "Home")] + ([("work", "/work", "Work")] if SHOW_WORK else []) + [("services", "/services", "Services"),
              ("about", "/about", "Studio"), ("contact", "/contact", "Contact")]
+    BAR_WORK = f'      <a class="bar__link" href="/work"{cur("work")}>Work</a>\n' if SHOW_WORK else ""
     menu_items = "\n".join(
         f'          <li><a href="{href}"{cur(key)}><span class="menu__n">0{i + 1}</span><span class="menu__t">{label}</span><span class="menu__a" aria-hidden="true">→</span></a></li>'
         for i, (key, href, label) in enumerate(items))
@@ -231,8 +237,7 @@ def header(active, b):
   <div class="wrap bar">
     <a class="brand" href="/" aria-label="Merova home">{_lockup_svg("brand__logo", 108, 22)}</a>
     <div class="bar__right">
-      <a class="bar__link" href="/work"{cur('work')}>Work</a>
-      <a class="bar__link" href="/services"{cur('services')}>Services</a>
+{BAR_WORK}      <a class="bar__link" href="/services"{cur('services')}>Services</a>
       <a class="bar__link bar__link--cta" href="/services#enquire">Start a project <span aria-hidden="true">↗</span></a>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu-open>
         <span class="menu-btn__label">Menu</span><span class="menu-btn__icon" aria-hidden="true"><i></i><i></i></span>
@@ -273,8 +278,7 @@ def footer(b):
         <h2>Studio</h2>
         <ul>
           <li><a href="/">Home</a></li>
-          <li><a href="/work">Work</a></li>
-          <li><a href="/services">Services</a></li>
+{FOOT_WORK}          <li><a href="/services">Services</a></li>
           <li><a href="/about">Studio</a></li>
           <li><a href="/contact">Contact</a></li>
           <li><a href="/brand">Brand kit</a></li>
@@ -344,6 +348,8 @@ def add_arrows(html: str) -> str:
 
 
 def page(filename, *, title, desc, body, active="", og_title=None, base="", noindex=False, extra_head="", canonical=None, og=None):
+    if not SHOW_WORK and (filename == "work.html" or filename.startswith("work/")):
+        return  # portfolio hidden: no /work pages are written
     path = canonical if canonical is not None else ("/" if filename == "index.html" else "/" + filename.replace(".html", ""))
     slug = "home" if filename == "index.html" else filename.replace(".html", "")
     og_img = og or (slug if (OUT / "assets" / "og" / f"{slug}.png").exists() else "home")
@@ -653,6 +659,33 @@ JSONLD = """
 </script>"""
 
 
+_o = 0 if SHOW_WORK else 1  # chapter numbers shift up by one when the work teaser is hidden
+def _c(n): return f"{n - _o:02d}"
+TEASER = (f"""  <section class="teaser" id="work" aria-labelledby="work-title" data-chapter="02" data-chapter-name="Selected work">
+    <div class="wrap teaser__grid">
+      <div class="teaser__head">
+        {kicker("02", "Selected work")}
+        <h2 class="h2 h2--serif" id="work-title">Real work, live on the web.</h2>
+        <p class="teaser__note">Two products, this website and an experiment. All self-initiated so far; client projects join here as they ship.</p>
+        <ol class="tlist" role="list">
+{chr(10).join(f'''          <li><a class="tlist__link" href="{w['href']}" data-teaser="{i}"><span class="tlist__n">{i + 1:02d}</span><span class="tlist__t">{w['title']}</span><span class="tlist__k">{w['category']}</span><span class="tlist__a" aria-hidden="true">→</span></a></li>''' for i, w in enumerate(WORK))}
+        </ol>
+        <div class="actions"><a class="btn btn--primary" href="/work">See all work</a></div>
+      </div>
+      <a class="teaser__stage" href="{WORK[0]['href']}" data-teaser-stage data-cursor="View project ↗" data-cursor-kind="view" aria-labelledby="teaser-project-title teaser-project-kind">
+{chr(10).join(f'''        <span class="teaser__slide{' is-on' if i == 0 else ''}" data-slide="{i}" data-href="{w['href']}" data-title="{w['title']}" aria-hidden="true">{work_visual(w) if w['visual'] != 'site' else '<div class="wv wv--site"><img class="teaser__site-shot" src="/assets/work/site-home.webp" alt="" width="1440" height="1000" loading="lazy" decoding="async"></div>'}</span>''' for i, w in enumerate(WORK))}
+        <span class="teaser__cap"><span id="teaser-project-title" data-teaser-title>{WORK[0]['title']}</span> <span id="teaser-project-kind" data-teaser-kind>{WORK[0]['kind']}</span></span>
+      </a>
+    </div>
+  </section>
+
+""") if SHOW_WORK else ""
+FINDER_WORK = ("""          <a class="finder__work" data-finder-work href="/work/merova-site" aria-labelledby="finder-work-label">
+            <span class="finder__preview"><img data-finder-image src="/assets/work/site-home.webp" alt="The Merova website, with its editorial typography and interactive Fold" width="1600" height="1000" loading="lazy" decoding="async"><span class="finder__preview-arrow" aria-hidden="true">↗</span></span>
+            <span class="finder__caption" id="finder-work-label"><span><strong data-finder-project>merova.app</strong> <small data-finder-kind>Website and identity</small></span> <span class="finder__origin">Self-initiated</span></span>
+          </a>""") if SHOW_WORK else ""
+HERO_SECOND = '<a class="btn btn--ghost" href="/work">See the work</a>' if SHOW_WORK else '<a class="btn btn--ghost" href="/services">See the services</a>'
+
 home = f"""<main id="main">
   <section class="hero" data-chapter="01" data-chapter-name="Studio">
     <div class="hero__pin">
@@ -667,7 +700,7 @@ home = f"""<main id="main">
             <p class="lede">Distinctive websites and useful web apps for founders. Designed and built by one person, from first sketch to launch.</p>
             <div class="actions">
               <a class="btn btn--primary" href="/services#enquire">Start a project</a>
-              <a class="btn btn--ghost" href="/work">See the work</a>
+              {HERO_SECOND}
             </div>
             <p class="hero__finder">Not sure where to start? <a class="link" href="#services">Find your starting point</a></p>
           </div>
@@ -734,29 +767,12 @@ home = f"""<main id="main">
     </div>
   </section>
 
-  <section class="teaser" id="work" aria-labelledby="work-title" data-chapter="02" data-chapter-name="Selected work">
-    <div class="wrap teaser__grid">
-      <div class="teaser__head">
-        {kicker("02", "Selected work")}
-        <h2 class="h2 h2--serif" id="work-title">Real work, live on the web.</h2>
-        <p class="teaser__note">Two products, this website and an experiment. All self-initiated so far; client projects join here as they ship.</p>
-        <ol class="tlist" role="list">
-{chr(10).join(f'''          <li><a class="tlist__link" href="{w['href']}" data-teaser="{i}"><span class="tlist__n">{i + 1:02d}</span><span class="tlist__t">{w['title']}</span><span class="tlist__k">{w['category']}</span><span class="tlist__a" aria-hidden="true">→</span></a></li>''' for i, w in enumerate(WORK))}
-        </ol>
-        <div class="actions"><a class="btn btn--primary" href="/work">See all work</a></div>
-      </div>
-      <a class="teaser__stage" href="{WORK[0]['href']}" data-teaser-stage data-cursor="View project ↗" data-cursor-kind="view" aria-labelledby="teaser-project-title teaser-project-kind">
-{chr(10).join(f'''        <span class="teaser__slide{' is-on' if i == 0 else ''}" data-slide="{i}" data-href="{w['href']}" data-title="{w['title']}" aria-hidden="true">{work_visual(w) if w['visual'] != 'site' else '<div class="wv wv--site"><img class="teaser__site-shot" src="/assets/work/site-home.webp" alt="" width="1440" height="1000" loading="lazy" decoding="async"></div>'}</span>''' for i, w in enumerate(WORK))}
-        <span class="teaser__cap"><span id="teaser-project-title" data-teaser-title>{WORK[0]['title']}</span> <span id="teaser-project-kind" data-teaser-kind>{WORK[0]['kind']}</span></span>
-      </a>
-    </div>
-  </section>
-
-  <section class="services s-light grow" id="services" aria-labelledby="svc-title" data-chapter="03" data-chapter-name="Services">
+{TEASER}
+  <section class="services s-light grow" id="services" aria-labelledby="svc-title" data-chapter="{_c(3)}" data-chapter-name="Services">
     <div class="wrap finder" data-project-finder>
       <div class="finder__heading">
         <div>
-          {kicker("03", "Find your starting point")}
+          {kicker(_c(3), "Find your starting point")}
           <h2 class="finder__title" id="svc-title">What are you<br>building?</h2>
         </div>
         <div class="finder__intro">
@@ -814,10 +830,7 @@ home = f"""<main id="main">
             <li>Responsive build and enquiry forms</li>
             <li>Search basics and fast loading</li>
           </ul>
-          <a class="finder__work" data-finder-work href="/work/merova-site" aria-labelledby="finder-work-label">
-            <span class="finder__preview"><img data-finder-image src="/assets/work/site-home.webp" alt="The Merova website, with its editorial typography and interactive Fold" width="1600" height="1000" loading="lazy" decoding="async"><span class="finder__preview-arrow" aria-hidden="true">↗</span></span>
-            <span class="finder__caption" id="finder-work-label"><span><strong data-finder-project>merova.app</strong> <small data-finder-kind>Website and identity</small></span> <span class="finder__origin">Self-initiated</span></span>
-          </a>
+{FINDER_WORK}
           <div class="finder__next">
             <p class="finder__quote">A recommended starting point. We'll agree the scope, timeline and quote after we talk.</p>
             <a class="btn btn--primary" data-finder-continue href="/services?type=website#enquire">Continue with this brief</a>
@@ -828,9 +841,9 @@ home = f"""<main id="main">
     </div>
   </section>
 
-  <section class="approach" aria-labelledby="approach-title" data-chapter="04" data-chapter-name="How it works">
+  <section class="approach" aria-labelledby="approach-title" data-chapter="{_c(4)}" data-chapter-name="How it works">
     <div class="wrap">
-      {kicker("04", "How it works")}
+      {kicker(_c(4), "How it works")}
       <h2 class="visually-hidden" id="approach-title">How a project works</h2>
       <p class="statement" data-words>Every project starts with one clear job. Then it's designed and built end to end, from the first sketch to the server it runs on.</p>
       <ol class="steps4" role="list">
@@ -839,10 +852,10 @@ home = f"""<main id="main">
     </div>
   </section>
 
-  <section class="pixels s-light grow" aria-labelledby="pixels-title" data-chapter="05" data-chapter-name="The studio">
+  <section class="pixels s-light grow" aria-labelledby="pixels-title" data-chapter="{_c(5)}" data-chapter-name="The studio">
     <div class="wrap pixels__grid">
       <div class="pixels__head">
-        {kicker("05", "The studio")}
+        {kicker(_c(5), "The studio")}
         <h2 class="pixels__title" id="pixels-title">Who's behind the <span class="pixels__px">pixels?</span></h2>
       </div>
       <div class="pixels__body">
@@ -861,10 +874,10 @@ home = f"""<main id="main">
     </div>
   </section>
 
-  <section class="next" id="next" aria-labelledby="next-title" data-chapter="06" data-chapter-name="In the works">
+  <section class="next" id="next" aria-labelledby="next-title" data-chapter="{_c(6)}" data-chapter-name="In the works">
     <div class="wrap next__grid2">
       <div class="next__head">
-        {kicker("06", "In the works")}
+        {kicker(_c(6), "In the works")}
         <h2 class="h2" id="next-title">Next from Merova.</h2>
         <p class="next__lede">Alongside client work, Merova makes small apps of its own. Merova Fit is the first. The next one gets a name when it's ready. No dates until they're real.</p>
         <p><a class="link" href="/fit#updates">Get told when it's out</a></p>
@@ -881,11 +894,11 @@ home = f"""<main id="main">
     </div>
   </section>
 
-  <section class="talk s-light grow" id="contact" aria-labelledby="talk-title" data-chapter="07" data-chapter-name="Start a project">
+  <section class="talk s-light grow" id="contact" aria-labelledby="talk-title" data-chapter="{_c(7)}" data-chapter-name="Start a project">
     <div class="talk__band" aria-hidden="true">{BAND}</div>
     <div class="wrap talk__grid">
       <div>
-        {kicker("07", "Start a project")}
+        {kicker(_c(7), "Start a project")}
         <h2 class="h2 h2--serif" id="talk-title">Have a project in mind?</h2>
       </div>
       <div class="talk__body">
@@ -1175,7 +1188,7 @@ services_page = f"""<main id="main">
       <p class="kicker">Services</p>
       <h1 class="display">Have a project in mind?</h1>
       <p class="lede">Let's build something worth exploring. Websites, interactive sites, web apps and improvements to what you already have, designed and built by one person, end to end.</p>
-      <div class="actions"><a class="btn btn--primary" href="#enquire">Start a project</a><a class="btn btn--ghost" href="/work">See the work</a></div>
+      <div class="actions"><a class="btn btn--primary" href="#enquire">Start a project</a>{'<a class="btn btn--ghost" href="/work">See the work</a>' if SHOW_WORK else '<a class="btn btn--ghost" href="mailto:hello@merova.app">hello@merova.app</a>'}</div>
     </div>
   </section>
 
@@ -1262,7 +1275,7 @@ about = f"""<main id="main">
             <li><strong>Websites.</strong><span>Designed and built from scratch, fast, and easy to keep up to date.</span></li>
             <li><strong>Interactive sites.</strong><span>Motion, scroll and small surprises, used where they help.</span></li>
             <li><strong>Web apps.</strong><span>Real products with accounts, data and payments, like Merova Fit and Company Hub.</span></li>
-            <li><strong>Experiments.</strong><span>Ideas being explored, like <a class="link" href="/work/the-fold">The Fold</a>. Always marked as experiments.</span></li>
+            <li><strong>Experiments.</strong><span>Ideas being explored, like {'<a class="link" href="/work/the-fold">The Fold</a>' if SHOW_WORK else 'The Fold on the home page'}. Always marked as experiments.</span></li>
           </ul>
           <div class="actions actions--spaced"><a class="btn btn--ghost" href="/services">See the services</a></div>
         </div>
@@ -1285,7 +1298,7 @@ about = f"""<main id="main">
       <div class="prose">
         <p class="split__label">The mark</p>
         <p class="big">The Merova logo is called Fold: two planes that overlap to make an M.</p>
-        <p>The left plane is solid. The right one sits behind it at 42%. Both are cut at 45°. Turn it around on the <a class="link" href="/">home page</a>, or read about <a class="link" href="/work/the-fold">the experiment</a>.</p>
+        <p>The left plane is solid. The right one sits behind it at 42%. Both are cut at 45°. Turn it around on the <a class="link" href="/">home page</a>{', or read about <a class="link" href="/work/the-fold">the experiment</a>' if SHOW_WORK else ""}.</p>
       </div>
       <figure class="construct">
         {FOLD_SVG}
@@ -1301,7 +1314,7 @@ about = f"""<main id="main">
           <p class="big">Have something interesting in mind? Let's make it real.</p>
           <div class="actions actions--spaced">
             <a class="btn btn--primary" href="/services#enquire">Start a project</a>
-            <a class="btn btn--ghost" href="/work">See the work</a>
+            {'<a class="btn btn--ghost" href="/work">See the work</a>' if SHOW_WORK else '<a class="btn btn--ghost" href="/services">See the services</a>'}
           </div>
         </div>
       </div>
@@ -1806,11 +1819,21 @@ FIT_JSONLD += f"""
 {FIT_FAQ_LD}
 </script>"""
 
+FIT_NEXT = ("""  <a class="case__next" href="/work/company-hub">
+    <span class="wrap case__next-in">
+      <span class="case__label">Next project</span>
+      <span class="case__next-title">Company Hub<span aria-hidden="true">→</span></span>
+      <span class="case__next-kind">Web application</span>
+      <span class="case__next-bar" aria-hidden="true"></span>
+    </span>
+  </a>
+""") if SHOW_WORK else ""
+
 fit = f"""<main id="main">
   <section class="fit-hero">
     <div class="wrap fit-hero__grid">
       <div class="fit-hero__copy">
-        <p class="kicker fit-hero__kicker"><a class="link" href="/work">Work</a> <span aria-hidden="true">/</span> (01) Product</p>
+        <p class="kicker fit-hero__kicker">{'<a class="link" href="/work">Work</a> <span aria-hidden="true">/</span> (01) Product' if SHOW_WORK else 'A Merova product'}</p>
         <img class="fit-hero__logo" src="assets/brand/merova-fit-lockup-bone.svg" alt="Merova Fit" width="200" height="35">
         <h1 class="display">Fitness coaching, in one app.</h1>
         <p class="lede">Your plan, your logs and your coach in one place. It runs in your browser today. Android is next.</p>
@@ -1926,15 +1949,7 @@ fit = f"""<main id="main">
       </div>
     </div>
   </section>
-  <a class="case__next" href="/work/company-hub">
-    <span class="wrap case__next-in">
-      <span class="case__label">Next project</span>
-      <span class="case__next-title">Company Hub<span aria-hidden="true">→</span></span>
-      <span class="case__next-kind">Web application</span>
-      <span class="case__next-bar" aria-hidden="true"></span>
-    </span>
-  </a>
-</main>
+{FIT_NEXT}</main>
 """
 page("fit.html", title="Merova Fit - Fitness coaching, in one app", active="fit",
      og_title="Merova Fit - Fitness coaching, in one app",
@@ -2106,9 +2121,9 @@ page("brand.html", title="Brand kit - Merova",
      body=brand)
 
 # ---------------------------------------------------------------- sitemap + security.txt
-SITEMAP_PAGES = ["", "work", "services", "work/company-hub", "work/merova-site", "work/the-fold", "fit", "about", "contact", "brand", "privacy", "terms", "refund", "shipping", "delete-account"]
+SITEMAP_PAGES = ["", "services"] + (["work", "work/company-hub", "work/merova-site", "work/the-fold"] if SHOW_WORK else []) + ["fit", "about", "contact", "brand", "privacy", "terms", "refund", "shipping", "delete-account"]
 TODAY = "2026-10-13"
-PAGE_UPDATED = {"": "2026-10-23", "services": "2026-10-22"}
+PAGE_UPDATED = {"": "2026-10-24", "services": "2026-10-24", "about": "2026-10-24", "fit": "2026-10-24"}
 (OUT / "sitemap.xml").write_text(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"  <url><loc>{SITE}/{p}</loc><lastmod>{PAGE_UPDATED.get(p, TODAY)}</lastmod></url>\n" for p in SITEMAP_PAGES)

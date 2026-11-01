@@ -33,6 +33,18 @@ const soundProbe = () => {
     // A suspended AudioContext is silent, but its analyser keeps the last buffer.
     (function f() { if (window.__an && window.__an.context.state === 'running') { window.__an.getFloatTimeDomainData(buf); for (const v of buf) peak = Math.max(peak, Math.abs(v)); }
       if (performance.now() - t0 < ms) requestAnimationFrame(f); else res(peak); })(); });
+  window.__beginListen = () => {
+    window.__peak = 0; window.__listening = true;
+    const buf = new Float32Array(2048);
+    (function sample() {
+      if (!window.__listening) return;
+      if (window.__an && window.__an.context.state === 'running') {
+        window.__an.getFloatTimeDomainData(buf);
+        for (const value of buf) window.__peak = Math.max(window.__peak, Math.abs(value));
+      }
+      requestAnimationFrame(sample);
+    })();
+  };
 };
 
 const state = pg => pg.evaluate(() => {
@@ -162,7 +174,7 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   await pg.click('.menu-btn'); await wait(900);
   const m1 = await pg.evaluate(() => ({ open: document.getElementById('menu').classList.contains('is-open'), lock: getComputedStyle(document.documentElement).overflow, inert: document.querySelector('main').inert, items: [...document.querySelectorAll('.menu__list a')].map(a => a.textContent.replace(/\d|→/g, '').trim()), focusIn: !!document.activeElement.closest('.menu') }));
   ok(m1.open && m1.lock === 'hidden' && m1.inert && m1.focusIn, `${tag}: menu opens, locks scroll, makes the page inert, moves focus in`);
-  ok(m1.items.join(',') === (SHOW_WORK ? 'Home,Work,Services,Studio,Contact' : 'Home,Services,Studio,Contact'), `${tag}: menu items ${m1.items.join(', ')}`);
+  ok(m1.items.join(',') === (SHOW_WORK ? 'Home,Work,Services,Studio,Contact,Account' : 'Home,Services,Studio,Contact,Account'), `${tag}: menu items ${m1.items.join(', ')}`);
   const panel = await (await pg.$('.menu__panel')).boundingBox();
   ok(Math.abs(panel.x + panel.width - W) < 1, `${tag}: drawer is attached to the right edge (${Math.round(panel.width)}px wide)`);
   await pg.screenshot({ path: `${S}/t6-${tag}-menu.png` });
@@ -186,9 +198,11 @@ for (const [W, H, tag] of [[1440, 1000, 'desktop'], [1024, 768, 'laptop'], [390,
   const tog = await pg.evaluate(() => ({ pressed: document.querySelector('.menu [data-sound-toggle]').getAttribute('aria-pressed'), label: document.querySelector('.menu [data-sound-toggle] [data-sound-label]').textContent, store: localStorage.getItem('merova-sound'), n: window.__snd }));
   ok(tog.pressed === 'true' && tog.label === 'Sound on' && tog.store === 'on' && tog.n > 0, `${tag}: Sound toggle turns on, shows it, remembers it, confirms with a chime`);
   let n0 = await pg.evaluate(() => window.__snd);
-  const listening = pg.evaluate(() => window.__listen(400));
+  // Observe the whole interaction, including any time spent scrolling menu rows into view.
+  await pg.evaluate(() => window.__beginListen());
   await rows[3].hover(); await wait(80); await rows[0].hover();
-  const peak = await listening;
+  await wait(100);
+  const peak = await pg.evaluate(() => { window.__listening = false; return window.__peak; });
   let n1 = await pg.evaluate(() => window.__snd);
   ok(n1 > n0 && peak > 0.005, `${tag}: hovering menu rows plays an audible tick when sound is on (${n1 - n0} tones, peak level ${peak.toFixed(3)})`);
   await pg.click('.menu [data-sound-toggle]'); await wait(200);

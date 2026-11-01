@@ -11,6 +11,7 @@ const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
 const server = http.createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/\\/g, '/');
+    const routeHeaders = Object.fromEntries(config.headers.filter(rule => rule.source !== '/(.*)' && new RegExp('^' + rule.source + '$').test(pathname)).flatMap(rule => rule.headers.map(header => [header.key, header.value])));
     // Mirror the simple redirects in vercel.json ("/a" and "/a/:path*" forms).
     const redirect = (config.redirects || []).find(r => r.source.endsWith('/:path*')
       ? pathname.startsWith(r.source.slice(0, -7) + '/') : pathname === r.source);
@@ -27,7 +28,7 @@ const server = http.createServer(async (req, res) => {
     let code = 200;
     try { if (!(await stat(file)).isFile()) throw new Error('Not a file'); }
     catch { file = path.join(root, '404.html'); code = 404; }
-    res.writeHead(code, { ...security, 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+    res.writeHead(code, { ...security, ...routeHeaders, 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(await readFile(file));
   } catch {
     res.writeHead(400).end('Bad request');

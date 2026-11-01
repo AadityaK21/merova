@@ -179,8 +179,8 @@ HEAD = """<!doctype html>
 <title>%%TITLE%%</title>
 <meta name="description" content="%%DESC%%">
 <link rel="canonical" href="%%URL%%">%%ROBOTS%%
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.web3forms.com; form-action 'self' https://api.web3forms.com; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
-<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.web3forms.com https://rovobqojqdpstgmnyjcq.supabase.co; form-action 'self' https://api.web3forms.com; base-uri 'self'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="%%REFERRER%%">
 <meta name="theme-color" content="#090909">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="%%B%%favicon.ico" sizes="any">
@@ -227,7 +227,7 @@ def header(active, b):
     def cur(name):
         return ' aria-current="page"' if active == name else ""
     items = [("home", "/", "Home")] + ([("work", "/work", "Work")] if SHOW_WORK else []) + [("services", "/services", "Services"),
-             ("about", "/about", "Studio"), ("contact", "/contact", "Contact")]
+             ("about", "/about", "Studio"), ("contact", "/contact", "Contact"), ("account", "/account", "Account")]
     BAR_WORK = f'      <a class="bar__link" href="/work"{cur("work")}>Work</a>\n' if SHOW_WORK else ""
     menu_items = "\n".join(
         f'          <li><a href="{href}"{cur(key)}><span class="menu__n">0{i + 1}</span><span class="menu__t">{label}</span><span class="menu__a" aria-hidden="true">→</span></a></li>'
@@ -238,6 +238,7 @@ def header(active, b):
     <a class="brand" href="/" aria-label="Merova home">{_lockup_svg("brand__logo", 108, 22)}</a>
     <div class="bar__right">
 {BAR_WORK}      <a class="bar__link" href="/services"{cur('services')}>Services</a>
+      <a class="bar__link" href="/login">Sign in</a>
       <a class="bar__link bar__link--cta" href="/services#enquire">Start a project <span aria-hidden="true">↗</span></a>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu-open>
         <span class="menu-btn__label">Menu</span><span class="menu-btn__icon" aria-hidden="true"><i></i><i></i></span>
@@ -347,7 +348,7 @@ def add_arrows(html: str) -> str:
     return re.sub(r'(<(?:a|button) class="btn[^"]*"[^>]*>)(.*?)</(a|button)>', fix, html, flags=re.S)
 
 
-def page(filename, *, title, desc, body, active="", og_title=None, base="", noindex=False, extra_head="", canonical=None, og=None):
+def page(filename, *, title, desc, body, active="", og_title=None, base="", noindex=False, extra_head="", canonical=None, og=None, referrer="strict-origin-when-cross-origin"):
     if not SHOW_WORK and (filename == "work.html" or filename.startswith("work/")):
         return  # portfolio hidden: no /work pages are written
     path = canonical if canonical is not None else ("/" if filename == "index.html" else "/" + filename.replace(".html", ""))
@@ -358,6 +359,7 @@ def page(filename, *, title, desc, body, active="", og_title=None, base="", noin
             .replace("%%TITLE%%", title)
             .replace("%%OGTITLE%%", og_title or title)
             .replace("%%DESC%%", desc)
+            .replace("%%REFERRER%%", referrer)
             .replace("%%URL%%", SITE + path)
             .replace("%%ROBOTS%%", '\n<meta name="robots" content="noindex">' if noindex else "")
             .replace("%%EXTRAHEAD%%", extra_head)
@@ -394,7 +396,7 @@ LEGAL_DOCS = [
     ("delete-account.html", "Delete your account"),
 ]
 
-def legal(filename, *, h1, title, desc, summary, sections, note=""):
+def legal(filename, *, h1, title, desc, summary, sections, note="", updated=None):
     CUR = ' aria-current="page"'
     nav = "\n".join(
         f'            <li><a href="{f}"{CUR if f == filename else ""}>{n}</a></li>'
@@ -403,7 +405,7 @@ def legal(filename, *, h1, title, desc, summary, sections, note=""):
                      for i, t in re.findall(r'<h2 id="([a-z0-9-]+)">([^<]+)</h2>', sections))
     body = f"""<main id="main">
   <div class="read-progress" aria-hidden="true"></div>
-  {page_hero(h1, meta=f"Last updated {UPDATED}")}
+  {page_hero(h1, meta=f"Last updated {updated or UPDATED}")}
   <section class="s-light">
     <div class="wrap">
       <div class="legal">
@@ -1466,6 +1468,7 @@ privacy_sections = f"""
               <thead><tr><th>Provider</th><th>What they do for us</th><th>Data involved</th></tr></thead>
               <tbody>
                 <tr><td>Razorpay</td><td>Payments and refunds</td><td>Order and payment details</td></tr>
+                <tr><td>Supabase</td><td>Merova website account authentication</td><td>Email address, authentication and session data</td></tr>
                 <tr><td>MongoDB Atlas</td><td>Database hosting</td><td>Account and app data</td></tr>
                 <tr><td>Render</td><td>Runs the Merova Fit server</td><td>Account and app data</td></tr>
                 <tr><td>Twilio</td><td>WhatsApp messages</td><td>Phone number, booking details</td></tr>
@@ -1527,7 +1530,7 @@ privacy_sections = f"""
           </ul>
           <p>We'll acknowledge your complaint within 48 hours and aim to resolve it within 30 days.</p>"""
 
-legal("privacy.html", h1="Privacy policy", title="Privacy policy - Merova",
+legal("privacy.html", h1="Privacy policy", title="Privacy policy - Merova", updated="1 November 2026",
       desc="How Merova and Merova Fit collect, use, share and protect your personal data, and how to use your rights.",
       summary=privacy_summary, sections=privacy_sections)
 
@@ -2120,10 +2123,13 @@ page("brand.html", title="Brand kit - Merova",
      desc="Download the Merova and Merova Fit logos, and see the colours, type and rules for using them.",
      body=brand)
 
+from auth_pages import render as render_account_pages
+render_account_pages(page, _ver)
+
 # ---------------------------------------------------------------- sitemap + security.txt
 SITEMAP_PAGES = ["", "services"] + (["work", "work/company-hub", "work/merova-site", "work/the-fold"] if SHOW_WORK else []) + ["fit", "about", "contact", "brand", "privacy", "terms", "refund", "shipping", "delete-account"]
 TODAY = "2026-10-13"
-PAGE_UPDATED = {"": "2026-10-24", "services": "2026-10-24", "about": "2026-10-24", "fit": "2026-10-24"}
+PAGE_UPDATED = {"": "2026-10-24", "services": "2026-10-24", "about": "2026-10-24", "fit": "2026-10-24", "privacy": "2026-11-01"}
 (OUT / "sitemap.xml").write_text(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join(f"  <url><loc>{SITE}/{p}</loc><lastmod>{PAGE_UPDATED.get(p, TODAY)}</lastmod></url>\n" for p in SITEMAP_PAGES)

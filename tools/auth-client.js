@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { passwordError, passwordRules, PASSWORD_HINT } from './password-policy.js';
+import { quoteContext, setupBilling } from './billing-client.js';
 
 // Public browser connection values. No service-role or secret key belongs here.
 const client = createClient('https://rovobqojqdpstgmnyjcq.supabase.co', 'sb_publishable_wJ8cDHLbF35kuKLz-TOFzQ_IoAHW2LM', {
@@ -7,13 +8,17 @@ const client = createClient('https://rovobqojqdpstgmnyjcq.supabase.co', 'sb_publ
 });
 const root = document.querySelector('[data-account-page]');
 const mode = root.dataset.accountPage;
-const form = root.querySelector('form');
+const form = root.querySelector('[data-auth-form]');
 const status = root.querySelector('[data-auth-status]');
 const privateView = root.querySelector('[data-private-view]');
 let busy = false;
 let verification = 0;
 let passwordUpdated = false;
 const newPassword = mode === 'signup' || mode === 'reset-password';
+const quoteID = quoteContext();
+const billing = mode === 'account' ? setupBilling(root, client, quoteID) : null;
+const accountPath = '/account' + (quoteID ? '?quote=' + encodeURIComponent(quoteID) : '');
+if (quoteID) root.querySelectorAll('a[href="/login"], a[href="/signup"]').forEach(link => { link.search = '?quote=' + encodeURIComponent(quoteID); });
 function validatePassword() {
   if (!newPassword) return;
   const input = form.elements.password;
@@ -37,6 +42,7 @@ function clearPasswords() {
   validatePassword();
 }
 function hidePrivateData() {
+  billing?.clear();
   if (privateView) privateView.hidden = true;
   const identity = root.querySelector('[data-account-email]');
   if (identity) identity.textContent = '';
@@ -82,13 +88,13 @@ form?.addEventListener('submit', event => {
       const { data, error } = await client.auth.signUp({ email: email(), password: form.elements.password.value, options: { emailRedirectTo: callback('/account') } });
       if (error) throw error;
       clearPasswords();
-      if (data.session) location.assign('/account');
+      if (data.session) location.assign(accountPath);
       else message('Check your inbox to confirm your email. If you already have an account, sign in or reset your password. Open the link in this browser.');
     } else if (mode === 'login') {
       const { error } = await client.auth.signInWithPassword({ email: email(), password: form.elements.password.value });
       if (error) throw error;
       clearPasswords();
-      location.assign('/account');
+      location.assign(accountPath);
     } else if (mode === 'forgot-password') {
       const { error } = await client.auth.resetPasswordForEmail(email(), { redirectTo: callback('/reset-password') });
       if (error) throw error;
@@ -146,10 +152,12 @@ async function verifyView() {
     root.querySelector('[data-account-email]').textContent = data.user.email || '';
     privateView.hidden = false;
     message('Signed in. Your account is ready.');
+    billing?.load();
   } else { form.hidden = false; message('Choose your new password.'); }
 }
 client.auth.onAuthStateChange(event => {
   if (event === 'SIGNED_OUT') {
+    try { sessionStorage.removeItem('merova-pending-quote'); } catch { /* storage unavailable */ }
     verification++;
     hidePrivateData();
     clearPasswords();

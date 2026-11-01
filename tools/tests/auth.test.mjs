@@ -15,6 +15,7 @@ try {
  for (const width of [1440,1024,390]) {
   const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce'});
   const page=await context.newPage(); const errors=[]; const calls=[]; let loginOK=false, authorized=true;
+  await page.route('**/api/payments*', route => route.fulfill({contentType:'application/json',body:JSON.stringify({ready:false,canCreate:false,live:false})}));
   page.on('pageerror',e=>errors.push(e.message)); page.on('console',m=>{if(m.type()==='error') errors.push(m.text())});
   await page.route(origin+'/**',async route=>{
    const req=route.request(); const url=new URL(req.url());const data=req.postDataJSON(); calls.push({path:url.pathname,query:url.search,data});
@@ -71,6 +72,7 @@ try {
  check(!await page.getByRole('button',{name:'Create account',exact:true}).isEnabled(),'no JS: signup cannot leak credentials through fallback submission');
  check(await page.locator('main noscript p').isVisible(),'no JS: clear fallback');await context.close();
  const callbackContext=await browser.newContext();const callbackPage=await callbackContext.newPage();let exchanged=false;
+ await callbackPage.route('**/api/payments*', route => route.fulfill({contentType:'application/json',body:JSON.stringify({ready:false,canCreate:false,live:false})}));
  await callbackPage.route(origin+'/**',async route=>{
   const url=new URL(route.request().url());
   if(url.pathname.endsWith('/token')) exchanged=url.searchParams.get('grant_type')==='pkce'&&route.request().postDataJSON().auth_code==='test-confirmation';

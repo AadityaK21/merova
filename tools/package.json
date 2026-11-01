@@ -11,7 +11,9 @@
     "axe": "node tests/axe-all.mjs && node tests/axe-settled.mjs",
     "build:auth": "node build-auth.mjs",
     "test:auth": "node tests/auth.test.mjs",
-    "test:auth-security": "node tests/auth-security.test.mjs"
+    "test:auth-security": "node tests/auth-security.test.mjs",
+    "test:payments-api": "node --test tests/payments-api.test.mjs",
+    "test:payments": "node tests/payments.test.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

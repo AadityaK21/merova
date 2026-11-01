@@ -33,7 +33,7 @@
 <link rel="preload" href="assets/fonts/instrument-serif-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/instrument-serif-400-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/style.css?v=f9c1985305">
-<script src="assets/js/main.js?v=4fb5ac80cf" defer></script><link rel="stylesheet" href="/assets/css/account.css?v=1ec3b91796"><script type="module" src="/assets/js/account.js?v=ab37fc78c0"></script>
+<script src="assets/js/main.js?v=4fb5ac80cf" defer></script><link rel="stylesheet" href="/assets/css/account.css?v=b06a221f64"><script type="module" src="/assets/js/account.js?v=5f6b4b483a"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -81,7 +81,38 @@
         <section class="account-card" aria-labelledby="account-title"><h2 id="account-title">Your account</h2><p role="status" aria-live="polite" class="account-status" data-auth-status>Checking your session…</p>
           <div data-private-view hidden><p class="account-help">Signed in as</p><p class="account-identity" data-account-email></p><hr>
           <h3>Have Merova build it</h3><p>Tell us what you are making. Scope, timeline and price are agreed before work starts.</p><a class="btn btn--primary" href="/services#enquire">Start a project<span class="btn__arrow" aria-hidden="true">↗</span></a>
-          <div class="account-future"><p class="kicker">In development</p><h3>Build with AI</h3><p>The AI workspace, saved projects and subscriptions are being built. Your account does not start a subscription and there is nothing to pay here yet.</p></div>
+          <section class="account-billing" data-billing aria-labelledby="billing-title">
+            <p class="kicker">An idea, made real</p><h3 id="billing-title">Your project payment</h3>
+            <p class="account-help">Pay an agreed project or milestone through Razorpay. This is a one-time payment, not a subscription.</p>
+            <p class="account-status" role="status" aria-live="polite" data-billing-status></p>
+            <form data-quote-find><label for="quote-find">Payment reference</label><input id="quote-find" name="quote" placeholder="plink_…" maxlength="46" autocomplete="off" required><button class="btn btn--ghost" type="submit">View payment request<span class="btn__arrow" aria-hidden="true">→</span></button></form>
+            <div data-billing-owner hidden>
+              <details class="billing-create"><summary>Create a payment request</summary>
+                <p class="account-help" data-billing-mode></p>
+                <form data-quote-create>
+                  <label for="quote-reference">Unique quote or milestone reference</label><input id="quote-reference" name="reference" minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9._\/\-]{2,39}" required aria-describedby="quote-reference-help"><p id="quote-reference-help" class="account-help">Reuse this reference if you retry. Use a new reference only for a different agreed payment.</p>
+                  <label for="quote-customer">Customer account email</label><input id="quote-customer" name="email" type="email" maxlength="254" autocomplete="off" required>
+                  <label for="quote-description">Agreed project or milestone scope</label><textarea id="quote-description" name="description" minlength="10" maxlength="1000" rows="3" required></textarea>
+                  <label for="quote-total">Final total in INR, including applicable taxes</label><input id="quote-total" name="amount" type="text" inputmode="decimal" pattern="[0-9]{1,9}(\.[0-9]{1,2})?" required>
+                  <label for="quote-terms">Agreed payment and cancellation terms</label><textarea id="quote-terms" name="terms" minlength="10" maxlength="256" rows="3" required aria-describedby="quote-terms-help"></textarea><p id="quote-terms-help" class="account-help">Summarise the terms already agreed with this customer, including cancellation or refund arrangements. Maximum 256 characters.</p>
+                  <label for="quote-days">Payment link valid for (days)</label><input id="quote-days" name="validDays" type="number" min="1" max="90" step="1" required>
+                  <label class="account-check"><input name="agreed" type="checkbox" required><span>The customer and I have agreed this scope, final total and payment terms.</span></label>
+                  <button class="btn btn--primary" type="submit">Create payment request<span class="btn__arrow" aria-hidden="true">→</span></button>
+                </form>
+              </details>
+            </div>
+            <article class="billing-quote" data-quote hidden aria-labelledby="quote-heading">
+              <p class="kicker" data-quote-state data-quote-value></p><h4 id="quote-heading" data-quote-reference data-quote-value></h4>
+              <p class="billing-amount" data-quote-amount data-quote-value></p>
+              <dl class="billing-details"><dt>For</dt><dd data-quote-email data-quote-value></dd><dt>Scope</dt><dd data-quote-description data-quote-value></dd><dt>Agreed terms</dt><dd data-quote-terms data-quote-value></dd><dt>Payment link expires</dt><dd data-quote-expiry data-quote-value></dd></dl>
+              <button class="btn btn--primary" type="button" data-quote-pay hidden>Continue to Razorpay<span class="btn__arrow" aria-hidden="true">→</span></button>
+              <button class="account-resend" type="button" data-quote-refresh>Refresh payment status</button>
+              <p class="account-help">Checkout takes place on Razorpay. Merova does not collect your card, bank or UPI credentials. This status records payment receipt; refunds and delivery are handled with the studio.</p>
+              <div data-quote-share-wrap hidden><label for="quote-share">Customer link</label><input id="quote-share" data-quote-share type="text" readonly><button class="account-resend" type="button" data-quote-copy>Copy customer link</button><p class="account-help">Share only with the customer on this quote. They must sign in with that email to view it in Merova. This link does not send an email.</p></div>
+              <a class="account-help" href="mailto:hello@merova.app">Ask about this payment</a>
+            </article>
+          </section>
+          <div class="account-future"><p class="kicker">In development</p><h3>Build with AI</h3><p>The AI workspace, saved projects and subscriptions are being built. Creating an account or paying a project quote does not start an AI subscription.</p></div>
           <div class="account-security"><h3>Account security</h3><a href="/forgot-password">Reset your password</a><br>
           <button class="account-resend" type="button" data-signout="local">Sign out of this browser</button><br>
           <button class="account-resend" type="button" data-signout="global">Sign out of all devices</button>

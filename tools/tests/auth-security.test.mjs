@@ -12,6 +12,7 @@ const browser = await chromium.launch({executablePath:process.env.CHROME_PATH ||
 try {
  const context = await browser.newContext({reducedMotion:'reduce'});
  const page = await context.newPage();
+ await context.route('**/api/payments*', route => route.fulfill({contentType:'application/json',body:JSON.stringify({ready:false,canCreate:false,live:false})}));
  const calls = []; let signupError = null; let logoutError = false; let reauthenticationNeeded = false;
  await context.route(origin+'/**', async route => {
   const req = route.request(), url = new URL(req.url());
@@ -95,7 +96,7 @@ try {
  check(await page.locator('[data-account-email]').textContent()==='','cross-tab signout removes previously displayed email');
  await context.close();
  const config=JSON.parse(readFileSync(new URL('../../vercel.json',import.meta.url),'utf8'));
- const headers=Object.fromEntries(config.headers[0].headers.map(h=>[h.key,h.value]));
+ const headers=Object.fromEntries(config.headers.find(rule=>rule.source==='/(.*)').headers.map(h=>[h.key,h.value]));
  check(headers['Content-Security-Policy'].includes("script-src 'self'") && !headers['Content-Security-Policy'].includes("'unsafe-inline'"),'deployment CSP excludes inline and third-party scripts');
  check(headers['X-Frame-Options']==='DENY' && headers['Content-Security-Policy'].includes("frame-ancestors 'none'"),'deployment blocks framing');
  check(headers['Strict-Transport-Security'].includes('max-age=63072000'),'deployment retains HTTPS enforcement');

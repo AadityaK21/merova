@@ -154,7 +154,7 @@
             </table>
           </div>
           <p>Some of what you log, like your weight, meals and activity, relates to your health. We use it only to provide the service to you. It is visible to you, your coach and us, and to no one else except the service providers listed below who store it for us.</p>
-          <p>Payment details such as card numbers, UPI IDs and bank details are entered directly with Razorpay. We receive only a payment reference and status.</p>
+          <p>Payment credentials are entered directly with Razorpay. For studio project payments, we send Razorpay your customer email, agreed scope, total, quote reference and payment terms to create a payment request. Merova retrieves that request and its payment status to show it in your account. Payment credentials are not collected by this website.</p>
 
           <h2 id="how-we-use">How we use your data</h2>
           <ul>
@@ -178,7 +178,7 @@
             <table>
               <thead><tr><th>Provider</th><th>What they do for us</th><th>Data involved</th></tr></thead>
               <tbody>
-                <tr><td>Razorpay</td><td>Payments and refunds</td><td>Order and payment details</td></tr>
+                <tr><td>Razorpay</td><td>Payments, studio payment requests and refunds</td><td>Customer email, agreed quote details, amounts and payment status</td></tr>
                 <tr><td>Supabase</td><td>Merova website account authentication</td><td>Email address, authentication and session data</td></tr>
                 <tr><td>MongoDB Atlas</td><td>Database hosting</td><td>Account and app data</td></tr>
                 <tr><td>Render</td><td>Runs the Merova Fit server</td><td>Account and app data</td></tr>
@@ -186,7 +186,7 @@
                 <tr><td>Resend</td><td>Sign-in codes and receipts by email</td><td>Email address, message content</td></tr>
                 <tr><td>Google Workspace</td><td>Our email inbox</td><td>Emails you send us</td></tr>
                 <tr><td>Web3Forms</td><td>Delivers contact form messages and waitlist sign-ups</td><td>What you type into the form</td></tr>
-                <tr><td>GitHub Pages</td><td>Hosts this website</td><td>IP address in server logs</td></tr>
+                <tr><td>Vercel</td><td>Hosts this website and studio payment API</td><td>IP address, account verification and payment request data processed by the server</td></tr>
                 <tr><td>Google Play</td><td>Distributes the Android app</td><td>Handled under Google's own policy</td></tr>
               </tbody>
             </table>
@@ -201,6 +201,7 @@
 
           <h2 id="cookies">Cookies and local storage</h2>
           <p>This website, merova.app, does not use tracking or advertising cookies.</p>
+          <p>Merova website accounts use browser storage for your sign-in session. We also keep the reference of a payment request in this tab's session storage so you can return to it after signing in or confirming your email. Signing out clears that reference.</p>
           <p>Merova Fit stores a sign-in token on your device so you stay signed in, and remembers settings like light or dark mode. These are needed for the app to work. If we ever add analytics, we'll update this policy first.</p>
 
           <h2 id="retention">How long we keep data</h2>
